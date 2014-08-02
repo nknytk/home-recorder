@@ -1,0 +1,9 @@
+{
+    "check_interval": 1,
+    "recording_duration": 60,
+    "eventchecker": ["gpioswitch"],
+    "notifier": ["mail"],
+    "recorder": ["webcam", "mail"],
+    "test_on_start": 0,
+    "continue_on_error": 1
+}

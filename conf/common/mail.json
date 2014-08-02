@@ -1,0 +1,10 @@
+{
+    "mail_from": "<Your e-mail address>",
+    "password": "<Your e-mail password>",
+    "mail_to": ["<E-mail addresses to notify events."],
+    "server": "E-mail server hostname or IP address",
+    "port": 587,
+    "datasource": "webcam",
+    "subject": "HomeRecorder detected event.",
+    "interval": 10
+}
