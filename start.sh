@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PYTHON="/usr/bin/python3"
-DEPENDANCIES="webcam python3-pip"
+DEPENDANCIES="webcam python3-pip libjpeg8-dev"
 
 for pkg in ${DEPENDANCIES}; do
   dpkg -l ${pkg} > /dev/null 2>&1
@@ -9,6 +9,10 @@ for pkg in ${DEPENDANCIES}; do
     sudo apt-get install ${pkg}
   fi
 done
+
+if [ ! -f /usr/lib/lbjpeg.so ]; then
+  sudo ln -s /usr/lib/arm-linux-gnueabihf/libjpeg.so /usr/lib/
+fi
 
 ${PYTHON} -c "import PIL"
 if [ $? -ne 0 ]; then
@@ -18,5 +22,4 @@ fi
 
 HRHOME=`dirname $0`
 
-sudo ${PYTHON} ${HRHOME}/app/home-recorder.py
-#> ${HRHOME}/log.log 2>&1
+sudo ${PYTHON} ${HRHOME}/app/home-recorder.py > ${HRHOME}/log.log 2>&1 & disown
