@@ -1,0 +1,6 @@
+{
+    "num_of_camera": 1,
+    "num_of_points": 6,
+    "diff_threshold": 10,
+    "tmpdir": "/run/shm"
+}

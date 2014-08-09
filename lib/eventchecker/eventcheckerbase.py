@@ -12,6 +12,10 @@ class EventCheckerBase:
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.homedir = os.path.join(current_dir, '../../')
+        self.datadir = os.path.join(self.homedir, 'data', 'eventchecker', self.eventchecker_name)
+        if not os.path.exists(self.datadir):
+            os.makedirs(os.path.abspath(self.datadir))
+
         common_conf = os.path.join(self.homedir, 'conf/common/%s.json' % self.eventchecker_name)
         checker_conf = os.path.join(self.homedir, 'conf/eventchecker/%s.json' % self.eventchecker_name)
         conf = common_conf if os.path.isfile(common_conf) else checker_conf
