@@ -4,7 +4,6 @@ import os
 import shlex
 import shutil
 import subprocess
-from time import sleep, time
 from copy import deepcopy
 
 from .recorderthread import  RecorderThread
