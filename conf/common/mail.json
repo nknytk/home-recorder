@@ -1,7 +1,7 @@
 {
     "mail_from": "<Your e-mail address>",
     "password": "<Your e-mail password>",
-    "mail_to": ["<E-mail addresses to notify events."],
+    "mail_to": "<E-mail addresses to notify events. For multiple addresses, split then by comma.",
     "server": "E-mail server hostname or IP address",
     "port": 587,
     "datasource": "webcam",

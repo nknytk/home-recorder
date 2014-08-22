@@ -9,6 +9,7 @@ from time import localtime, sleep, strftime, time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
 sys.path.insert(0, os.path.join(homedir, 'lib'))
+from util import presence
 
 def load_components(setting, component_name):
     components = []
@@ -39,15 +40,21 @@ def recordhome(setting):
         for recorder in recorders:
             recorder.join()
 
+    server_token = None
+
     while True:
         now = time()
+        if not server_token:
+            server_token, client_digest = presence.token_pair(setting)
 
         event_msgs = []
+        event_files = []
         try:
             for checker in eventcheckers:
                 chk_res = checker.check()
                 if chk_res[0]:
                     event_msgs.append(chk_res[1])
+                    event_files += chk_res[2]
         except:
             trc = traceback.format_exc()
             for notifier in notifiers:
@@ -61,10 +68,28 @@ def recordhome(setting):
         if not event_msgs:
             sleep(time() + setting['check_interval'] - now)
             continue
+        print('Event detected: ' + ' '.join(event_msgs))
+
+        if server_token:
+            try:
+                print('Check if owner is at home.')
+                presence.send(byte_msg=server_token)
+                owner_is_at_home = presence.receive(expected_data=client_digest)
+                server_token = None
+                if owner_is_at_home:
+                    print('Owner is at home. Skip notification.')
+                    sleep(time() + setting['check_interval'] - now)
+                    continue
+                print('Owner is not at home.')
+            except:
+                trc = traceback.format_exc()
+                for notifier in notifiers:
+                    notifier.notify('Error in presence check', trc)
 
         evid = strftime('%Y-%m-%d_%H:%M:%S', localtime())
+        print('Start notification and recording. Event iD: ' + evid)
         for notifier in notifiers:
-            notifier.notify(evid, '\n'.join(event_msgs))
+            notifier.notify(evid, '\n'.join(event_msgs), event_files)
 
         try:
             for recorder in recorders:
