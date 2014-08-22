@@ -2,11 +2,11 @@
 
 from time import time
 from RPi import GPIO
-from .pichecker import PiChecker
+from .pichecker import EventCheckerBase
 
-class GPIOSwitch(PiChecker):
+class GPIOSwitch(EventCheckerBase):
     def __init__(self):
-        PiChecker.__init__(self)
+        EventCheckerBase.__init__(self)
 
         self.OPEN = GPIO.HIGH
         self.CLOSED = GPIO.LOW
@@ -58,7 +58,7 @@ class GPIOSwitch(PiChecker):
 
         event_pins = [str(p) for p in event_pins]
         msg = 'Status of pin ' + ', '.join(event_pins) + ' changed.'
-        return (True, msg)
+        return (True, msg, [])
 
 
 if __name__ == '__main__':

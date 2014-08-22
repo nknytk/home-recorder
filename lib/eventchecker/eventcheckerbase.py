@@ -23,7 +23,7 @@ class EventCheckerBase:
             self.setting = loads(f.read())
         
     def check(self):
-        return (False, 'Nothing happened')
+        return (False, 'Nothing happened', [])
 
     def shoud_check(self):
         return True

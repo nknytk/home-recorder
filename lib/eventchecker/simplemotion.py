@@ -39,34 +39,45 @@ class SimpleMotion(EventCheckerBase):
             for j in range(1, divnum):
                 self.target_pixels.append((int(i * width/divnum), int(j * height/divnum)))
 
+        self.filenames = []
         self.prev_pxls = []
         for i in range(self.setting['num_of_camera']):
+            self.filenames.append({
+                'newest': os.path.join(self.setting['tmpdir'], str(i) + '.jpg'),
+                'previous': os.path.join(self.setting['tmpdir'], str(i) + '_prev.jpg'), 
+            })
             pxs = self.getpixels(i)
             self.prev_pxls.append([pxs, pxs])
 
     def check(self):
         event_occurred = False
-        msg = ''
+        event_devices = []
+        files = []
+
         for i in range(self.setting['num_of_camera']):
+            os.rename(self.filenames[i]['newest'], self.filenames[i]['previous'])
             new_pxls = self.getpixels(i)
             if self.diffsize(new_pxls, self.prev_pxls[i][0]) > self.setting['diff_threshold'] \
                and self.diffsize(new_pxls, self.prev_pxls[i][1]) > self.setting['diff_threshold']:
                event_occurred = True
-               msg += 'Camera %d detected motion event.\n' % i
-            print('\t'.join([str(event_occurred),
-                             str(self.diffsize(new_pxls, self.prev_pxls[i][0])),
-                             str(self.diffsize(new_pxls, self.prev_pxls[i][1]))]))
+               event_devices.append(str(i))
+               files.append(self.filenames[i]['previous'])
+               files.append(self.filenames[i]['newest'])
             del(self.prev_pxls[i][1])
             self.prev_pxls[i].insert(0, new_pxls)
 
-        return (event_occurred, msg)
+        if event_devices:
+            msg = 'Camera %s detected motion event. See attached images.' % ','.join(event_devices)
+        else:
+            msg = 'No motion event.'
+        return (event_occurred, msg, files)
             
 
     def getpixels(self, device_num):
         command = shlex.split('webcam ' + self.confs[device_num])
         with open('/dev/null', 'w') as dn:
             subprocess.call(command, stdout=dn, stderr=dn)
-        img = Image.open(os.path.join(self.setting['tmpdir'], str(device_num) + '.jpg'))
+        img = Image.open(self.filenames[device_num]['newest'])
         pxs = [img.getpixel(cood) for cood in self.target_pixels]
         img.close()
         return pxs
