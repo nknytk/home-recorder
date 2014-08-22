@@ -36,12 +36,15 @@ class Webcam(RecorderThread):
         for i in range(self.setting['num_of_camera']):
             self.confs.append(self.write_webcam_config(eventid, i))
 
+        self.devnull = open('/dev/null', mode='w')
         RecorderThread.record(self, eventid, duration)
+        self.devnull.close()
 
     def snapshot(self, eventid):
         for conf in self.confs:
             command = shlex.split('webcam ' + conf)
-            subprocess.call(command)
+            print('Recorded picture with webcam')
+            subprocess.call(command, stdout=self.devnull, stderr=self.devnull)
 
     def write_webcam_config(self, eventid, device_num):
         conf = deepcopy(self.default_webcam_conf)
