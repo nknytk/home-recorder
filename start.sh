@@ -1,5 +1,6 @@
 #!/bin/bash
 
+HRHOME=`dirname $0`
 PYTHON="/usr/bin/python3"
 DEPENDANCIES="webcam python3-pip libjpeg8-dev"
 
@@ -20,6 +21,4 @@ if [ $? -ne 0 ]; then
   sudo pip-${python_ver} install Pillow
 fi
 
-HRHOME=`dirname $0`
-
-sudo ${PYTHON} ${HRHOME}/app/home-recorder.py > ${HRHOME}/log.log 2>&1 & disown
+sudo ${PYTHON} ${HRHOME}/app/home-recorder.py >> ${HRHOME}/log.log 2>&1 & disown

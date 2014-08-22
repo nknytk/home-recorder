@@ -57,7 +57,7 @@ def token_pair(setting):
 
     hasher = getattr(hashlib, setting.get('token_digest_algolithm', 'sha256'))
     recv_digest = bytes(recv_token, 'utf-8')
-    for i in range(setting.get('token_digest_repetition', 10000)):
+    for i in range(setting.get('token_digest_repetition', 3000)):
         h = hasher()
         h.update(recv_digest)
         recv_digest = h.digest()
