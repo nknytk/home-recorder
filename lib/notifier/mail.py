@@ -1,42 +1,27 @@
-#!/usr/bin/python3
 # coding: utf-8
 
 import os
-import smtplib
-import mimetypes
-from email.mime.text import MIMEText
-from email.utils import formatdate
+import sys
 from time import sleep, time
 
+sys.path.append(os.path.join(__file__, '../util'))
 from .notifierbase import NotifierBase
+from util.mailutil import create_mail, send_mail
 
 
 class Mail(NotifierBase):
-    def notify(self, eventid, message):
-        mail = self.create_mail(eventid, message)
-        self.send(mail)
-
-    def create_mail(self, eventid, message):
-        mail = MIMEText(message)
-        mail['From'] = self.setting['mail_from']
-        mail['To'] = ','.join(self.setting['mail_to'])
-        mail['Subject'] = self.setting['subject'] + ' EventID: ' + eventid
-        mail['Date'] = formatdate()
-        return mail
-
-    def send(self, mailcontent):
-        mailer = smtplib.SMTP(self.setting['server'], self.setting['port'])
-        try:
-            mailer.ehlo()
-            mailer.starttls()
-            mailer.ehlo()
-            mailer.login(self.setting['mail_from'], self.setting['password'])
-            mailer.sendmail(self.setting['mail_from'],
-                            self.setting['mail_to'],
-                            mailcontent.as_string())
-        finally:
-            mailer.close()
-            print('mail send at ' + str(time()))
+    def notify(self, eventid, message, files=[]):
+        mail = create_mail(mfrom=self.setting['mail_from'],
+                           mto=self.setting['mail_to'],
+                           subject=self.setting['subject'] + ' Event ID: ' + eventid,
+                           message=message,
+                           attachment_paths=files)
+        send_mail(mfrom=self.setting['mail_from'],
+                  mpassword=self.setting['password'],
+                  mto=self.setting['mail_to'],
+                  mserver=self.setting['server'],
+                  mport=self.setting['port'],
+                  mailcontent=mail)
 
 
 if __name__ == '__main__':

@@ -2,17 +2,12 @@
 # coding: utf-8
 
 import os
-import smtplib
-import mimetypes
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.mime.audio import MIMEAudio
-from email.mime.image import MIMEImage
-from email.mime.text import MIMEText
-from email.utils import formatdate
+import sys
 from time import sleep, time
 
+sys.path.append(os.path.join(__file__, '../util'))
 from .recorderthread import RecorderThread
+from util.mailutil import create_mail, send_mail
 
 
 class Mail(RecorderThread):
@@ -35,10 +30,16 @@ class Mail(RecorderThread):
                 sleep(now + self.setting['interval'] - time())
                 continue
 
-            mail = self.create_mail(eventid)
-            self.attach2mail(mail, new_files)
-            print(new_files)
-            self.send(mail)
+            mail = create_mail(mfrom=self.setting['mail_from'],
+                               mto=self.setting['mail_to'],
+                               subject=self.setting['subject'] + ' Event ID: ' + eventid,
+                               attachment_paths=new_files)
+            send_mail(mfrom=self.setting['mail_from'],
+                      mpassword=self.setting['password'],
+                      mto=self.setting['mail_to'],
+                      mserver=self.setting['server'],
+                      mport=self.setting['port'],
+                      mailcontent=mail)
             processed_files.update(new_files)
 
             now = time()
@@ -64,53 +65,8 @@ class Mail(RecorderThread):
         return sorted(list(newfiles))
         
 
-    def create_mail(self, eventid):
-        mail = MIMEMultipart()
-        mail['From'] = self.setting['mail_from']
-        mail['To'] = ','.join(self.setting['mail_to'])
-        mail['Subject'] = self.setting['subject'] + ' EventID: ' + eventid
-        mail['Date'] = formatdate()
-        return mail
-
-    def attach2mail(self, mail, filenames):
-        for fname in filenames:
-            with open(fname, 'rb') as f:
-                content = f.read()
-            fname = fname.split('/')[-1]
-
-            conttype, ignored = mimetypes.guess_type(fname)
-            if conttype is None:
-                conttype = 'application/octet-stream'
-            maintype, subtype = conttype.split('/')
-
-            if maintype == 'image':
-                attachment = MIMEImage(content, subtype, filename=fname)
-            elif maintype == 'text':
-                attachment = MIMEText(content, subtype, 'utf-8')
-            elif maintype == 'audio':
-                attachment = MIMEAudioe(content, subtype, filename=fname)
-            else:
-                attachment = MIMEApplicatione(content, subtype, filename=fname)
-
-            attachment.add_header('Content-Disposition', 'attachment', filename=fname)
-            mail.attach(attachment)
-
-    def send(self, mailcontent):
-        mailer = smtplib.SMTP(self.setting['server'], self.setting['port'])
-        try:
-            mailer.ehlo()
-            mailer.starttls()
-            mailer.ehlo()
-            mailer.login(self.setting['mail_from'], self.setting['password'])
-            mailer.sendmail(self.setting['mail_from'],
-                            self.setting['mail_to'],
-                            mailcontent.as_string())
-        finally:
-            mailer.close()
-            print('mail send at ' + str(time()))
-
-
 if __name__ == '__main__':
-    mailer = Mail()
-    mailer.start_recording('test', 20)
-    mailer.join()
+    pass
+#    mailer = Mail()
+#    mailer.start_recording('test', 20)
+#    mailer.join()
