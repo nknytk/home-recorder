@@ -28,6 +28,10 @@ Upload to online stroage
 * Error handling
 * Log handling
 
+## Comment
+
+Check out [Android client application](https://github.com/nknytk/home-recorder-client) if you're Android user!
+
 ## License
 
 Copyright (c) [2014] [Yutaka Nakano]
