@@ -18,7 +18,8 @@ Under Construction
 How to use  
 How to add feature
 * ~~eventchecker~~  
-~~Event detection with camera~~ done
+~~Event detection with camera~~ done  
+Circuit diagram for gpio switch
 * notifier  
 Notification with Google Cloud Messaging for Android  
 Notification receiver for Andoird
