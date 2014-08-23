@@ -34,7 +34,7 @@ def receive(ip='', port=19201, expected_data=b'',timeout=1):
             received_expected = True
             break
 
-        now = time.time()
+        now = time()
         remaining_wait = start_time + timeout - now
         if remaining_wait > 0:
             sock.settimeout(remaining_wait)
