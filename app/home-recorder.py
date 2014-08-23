@@ -36,7 +36,7 @@ def recordhome(setting):
         for recorder in recorders:
             recorder.join()
 
-    owner_is_at_home = False
+    eventcheck_enabled = False
     now = time()
     while True:
         begin = time()
@@ -46,7 +46,7 @@ def recordhome(setting):
         if server_token:
             try:
                 print('Check if owner is at home.')
-                max_retry = setting.get('presence_check_max_retry', 10) if owner_is_at_home else 1
+                max_retry = setting.get('presence_check_max_retry', 10) if eventcheck_enabled else 1
                 for i in range(max_retry):
                     presence.send(byte_msg=server_token)
                     owner_is_in_lan = presence.receive(expected_data=client_digest,
@@ -56,23 +56,23 @@ def recordhome(setting):
                     elif i < max_retry - 1:
                         print('Timed out. Retry.')
 
-                if owner_is_at_home:
+                if eventcheck_enabled:
                     if owner_is_in_lan:
                         print('Owner is at home. Event check is kept disabled.')
                     else:
                         print('Owner is NOT at home. Event check is enabled.')
-                        owner_is_at_home = False
+                        eventcheck_enabled = False
                         for ec in eventcheckers:
                             ec.reset()
 
                 else:
                     if owner_is_in_lan:
                         print('Owner is at home. Disable event check.')
-                        owner_is_at_home = True
+                        eventcheck_enabled = True
                     else:
                         print('Owner is NOT at home. Event check is kept enablsed.')
 
-                if owner_is_at_home:
+                if eventcheck_enabled:
                     now = time()
                     remaining_wait = begin + setting.get('presence_check_interval', 10) - now
                     if remaining_wait > 0:
