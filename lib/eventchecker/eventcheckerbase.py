@@ -25,5 +25,5 @@ class EventCheckerBase:
     def check(self):
         return (False, 'Nothing happened', [])
 
-    def shoud_check(self):
-        return True
+    def reset(self):
+        pass

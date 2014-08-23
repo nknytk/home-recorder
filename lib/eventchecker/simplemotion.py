@@ -39,6 +39,9 @@ class SimpleMotion(EventCheckerBase):
             for j in range(1, divnum):
                 self.target_pixels.append((int(i * width/divnum), int(j * height/divnum)))
 
+        self.reset()
+
+    def reset(self):
         self.filenames = []
         self.prev_pxls = []
         for i in range(self.setting['num_of_camera']):
