@@ -25,7 +25,7 @@ Notification receiver for Andoird
 * recorder  
 Upload to online stroage
 * Error handling
-* Log handlin
+* Log handling
 
 ## License
 
