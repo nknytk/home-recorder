@@ -17,8 +17,8 @@ Under Construction
 * Write README  
 How to use  
 How to add feature
-* eventchecker  
-Event detection with camera
+* ~~eventchecker~~  
+~~Event detection with camera~~ done
 * notifier  
 Notification with Google Cloud Messaging for Android  
 Notification receiver for Andoird
