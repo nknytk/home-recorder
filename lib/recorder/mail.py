@@ -20,10 +20,12 @@ class Mail(RecorderThread):
         processed_files = set()
 
         finishtime = time() + duration
+        is_last = False
         while True:
             now = time()
+            next = now + self.setting['interval']
             if now > finishtime:
-                break
+               is_last = True 
 
             new_files = self.get_newfiles(eventdir, processed_files)
             if not new_files:
@@ -43,12 +45,10 @@ class Mail(RecorderThread):
             processed_files.update(new_files)
 
             now = time()
-            next = now + self.setting['interval']
-            if next > finishtime:
+            if is_last or now > finishtime:
                 break
-            else:
-                if next > now:
-                    sleep(next - now)
+            if next > now:
+                sleep(next - now)
 
     def get_newfiles(self, dir_name, processed):
         try:
