@@ -1,7 +1,7 @@
 {
     "check_interval": 1,
     "recording_duration": 60,
-    "eventchecker": ["simplemotion", "gpioswitch"],
+    "eventchecker": ["simplemotion"],
     "notifier": ["mail"],
     "recorder": ["webcam", "mail"],
     "server_side_token": "<Input server side token to use Android client application, otherwise blank.>",
