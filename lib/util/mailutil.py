@@ -58,7 +58,7 @@ def send_mail(mfrom, mpassword, mto, mserver, mport, mailcontent):
         mailer.sendmail(mfrom, mto.split(','), mailcontent.as_string())
     finally:
         mailer.close()
-        print('mail send at ' + str(time()))
+        print('mail sent at ' + str(time()))
 
 
 if __name__ == '__main__':
