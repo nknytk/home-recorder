@@ -21,69 +21,102 @@ def load_components(setting, component_name):
 
     return components
 
+def check_owner_is_in_lan(setting, eventcheck_enabled):
+    server_token, client_digest = presence.token_pair(setting)
+    if not server_token:
+        return False
+
+    max_retry = 1 if eventcheck_enabled else setting.get('presence_check_max_retry', 10)
+    for i in range(max_retry):
+        presence.send(byte_msg=server_token)
+        owner_is_in_lan = presence.receive(expected_data=client_digest,
+                                           timeout=setting.get('presence_check_timeout', 0.5))
+        if owner_is_in_lan:
+            break
+
+    return owner_is_in_lan
+
+def testrun(setting):
+    print('Start test run.')
+
+    print('Initialize eventcheckers.')
+    eventcheckers = load_components(setting, 'eventchecker')
+    print('OK\n')
+    print('Initialize notifiers.')
+    notifiers = load_components(setting, 'notifier')
+    print('OK\n')
+    print('Initialize recorders.')
+    recorders = load_components(setting, 'recorder')
+    print('OK\n')
+
+    print('Check if owner is at home.')
+    owner_is_in_lan = check_owner_is_in_lan(setting, False)
+    print(owner_is_in_lan)
+    print('OK\n')
+
+    print('Run event checks.')
+    for checker in eventcheckers:
+        checker.check()
+    print('OK\n')
+    print('Run notifications.')
+    for notifier in notifiers:
+        notifier.notify('test', 'Test notification from home-recorder')
+    print('OK\n')
+    print('Run recorders.')
+    for recorder in recorders:
+        recorder.start_recording('test', 5)
+    for recorder in recorders:
+        recorder.join()
+    print('OK\n')
+
+    print('All components are OK.')
+
 def recordhome(setting):
     eventcheckers = load_components(setting, 'eventchecker')
     notifiers = load_components(setting, 'notifier')
     recorders = load_components(setting, 'recorder')
 
-    if setting['test_on_start']:
-        for checker in eventcheckers:
-            checker.check()
-        for notifier in notifiers:
-            notifier.notify('test', 'Test notification from home-recorder')
-        for recorder in recorders:
-            recorder.start_recording('test', 5)
-        for recorder in recorders:
-            recorder.join()
-
-    eventcheck_enabled = False
+    eventcheck_enabled = True
     now = time()
     while True:
         begin = time()
 
         # If the owner's client is in LAN, disable event check, notification and recording.
-        server_token, client_digest = presence.token_pair(setting)
-        if server_token:
-            try:
-                print('Check if owner is at home.')
-                max_retry = setting.get('presence_check_max_retry', 10) if eventcheck_enabled else 1
-                for i in range(max_retry):
-                    presence.send(byte_msg=server_token)
-                    owner_is_in_lan = presence.receive(expected_data=client_digest,
-                                                       timeout=setting.get('presence_check_timeout', 0.5))
-                    if owner_is_in_lan:
-                        break
-                    elif i < max_retry - 1:
-                        print('Timed out. Retry.')
+        try:
+            print('Check if owner is at home.')
+            owner_is_in_lan = check_owner_is_in_lan(setting, eventcheck_enabled)
 
-                if eventcheck_enabled:
-                    if owner_is_in_lan:
-                        print('Owner is at home. Event check is kept disabled.')
-                    else:
-                        print('Owner is NOT at home. Event check is enabled.')
-                        eventcheck_enabled = False
-                        for ec in eventcheckers:
-                            ec.reset()
-
+            if eventcheck_enabled:
+                if owner_is_in_lan:
+                    print('Owner is at home. Disable event check.')
+                    eventcheck_enabled = False
                 else:
-                    if owner_is_in_lan:
-                        print('Owner is at home. Disable event check.')
-                        eventcheck_enabled = True
-                    else:
-                        print('Owner is NOT at home. Event check is kept enablsed.')
+                    print('Owner is NOT at home. Event check is kept enablsed.')
 
-                if eventcheck_enabled:
-                    now = time()
-                    remaining_wait = begin + setting.get('presence_check_interval', 10) - now
-                    if remaining_wait > 0:
-                        print('Wait ' + str(remaining_wait) + ' sec for next check')
-                        sleep(remaining_wait)
-                    continue
+            else:
+                if owner_is_in_lan:
+                    print('Owner is at home. Event check is kept disabled.')
+                else:
+                    print('Owner is NOT at home. Enable event check.')
+                    eventcheck_enabled = True
+                    for ec in eventcheckers:
+                        ec.reset()
 
-            except:
-                trc = traceback.format_exc()
-                for notifier in notifiers:
+            if not eventcheck_enabled:
+                now = time()
+                remaining_wait = begin + setting.get('presence_check_interval', 10) - now
+                if remaining_wait > 0:
+                    print('Wait ' + str(remaining_wait) + ' sec for next check')
+                    sleep(remaining_wait)
+                continue
+
+        except:
+            trc = traceback.format_exc()
+            for notifier in notifiers:
+                try:
                     notifier.notify('Error in presence check', trc)
+                except:
+                    print(traceback.format_exc())
 
         now = time()
         remaining_wait = begin + setting.get('check_interval', 1) - now
@@ -91,6 +124,7 @@ def recordhome(setting):
             sleep(remaining_wait)
 
         # Check events
+        print('Start event detection.')
         event_msgs = []
         event_files = []
         try:
@@ -102,13 +136,13 @@ def recordhome(setting):
         except:
             trc = traceback.format_exc()
             for notifier in notifiers:
-                notifier.notify('Error in eventchecker', trc)
-            if setting['continue_on_error']:
-                continue
-            else:
-                sys.exit(1)
+                try:
+                    notifier.notify('Error in eventchecker', trc)
+                except:
+                    print(traceback.format_exc())
 
         if not event_msgs:
+            print('No event detected.')
             continue
         print('Event detected: ' + ' '.join(event_msgs))
 
@@ -116,7 +150,10 @@ def recordhome(setting):
         evid = strftime('%Y-%m-%d_%H:%M:%S', localtime())
         print('Start notification and recording. Event iD: ' + evid)
         for notifier in notifiers:
-            notifier.notify(evid, '\n'.join(event_msgs), event_files)
+            try:
+                notifier.notify(evid, '\n'.join(event_msgs), event_files)
+            except:
+                print(traceback.format_exc())
 
         # Record after notification
         try:
@@ -126,11 +163,10 @@ def recordhome(setting):
         except:
             trc = traceback.format_exc()
             for notifier in notifiers:
-                notifier.notify('Error in recorder', trc)
-            if setting['continue_on_error']:
-                continue
-            else:
-                sys.exit(1)
+                try:
+                    notifier.notify('Error in recorder', trc)
+                except:
+                    print(traceback.format_exc())
 
         finally:
             for recorder in recorders:
@@ -140,4 +176,8 @@ if __name__ == '__main__':
     conffile = os.path.join(homedir, 'conf/common/home-recorder.json')
     with open(conffile, encoding='utf-8') as f:
         SETTING = loads(f.read())
-    recordhome(SETTING)
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'test':
+        testrun(SETTING)
+    else:
+        recordhome(SETTING)
