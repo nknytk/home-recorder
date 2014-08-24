@@ -3,17 +3,19 @@
 import os
 import sys
 import time
-import shlex
-import subprocess
 from urllib.parse import parse_qsl
 
-CONFFILE = '/tmp/camera_test.conf'
+sys.path.append(os.path.join(os.path.dirname(__file__), '../lib/util'))
+from webcam import avail_cameras, capture, write_webcam_config
+
+TMP_WEBCAM_CONF = '/tmp/tmp_webcam_config'
+TMP_IMG = '/tmp/webcam_tmp_img.jpg'
 
 HTML_TEMPLATE="""<html>
 <head><title>camera direction</title></head>
 <body>
 
-<form>Select camera id:&nbsp;<select id="devid">%s</select></input></form>
+<form>Select camera id:&nbsp;<select id="device">%s</select></input></form>
 <div id="imgdiv"><span>Now loading..</span></div>
 
 <script>
@@ -24,13 +26,13 @@ if (imgdiv.childNodes.length > 1) {
     imgdiv.childNodes.item(0).style.visibility = "visible";
 }
 
-var devid = document.getElementById("devid").value;
+var device = document.getElementById("device").value;
 var newimg = document.createElement("img");
-newimg.src = "?device=" + devid + "&random=" + Math.random();
+newimg.src = "?device=" + device + "&random=" + Math.random();
 newimg.style.visibility ="hidden";
 imgdiv.appendChild(newimg);
 
-setTimeout("keep_updating_img()", 1500);
+setTimeout("keep_updating_img()", 1200);
 }
 
 keep_updating_img();
@@ -39,53 +41,21 @@ keep_updating_img();
 </body>
 </html>"""
 
-WEBCAM_CONF_TEMPLATE = """[grab]
-device = /dev/video%s
-text = test
-fg_red = 255
-fg_green = 255
-fg_blue = 255
-width = 640
-height = 480
-delay = 0
-wait = 0
-rotate = 0
-top = 0
-left = 0
-bottom = -1
-right = -1
-quality = 90
-trigger = 0
-once = 1
-archive = /tmp/camera_test.jpg"""
 
-
-def get_image(device_id):
-    with open(CONFFILE, mode='w', encoding='utf-8') as f:
-        f.write(WEBCAM_CONF_TEMPLATE % device_id)
-    command = 'webcam %s' % CONFFILE
-    devnull = open('/dev/null', mode='w')
-    subprocess.call(shlex.split(command), stdout=devnull, stderr=devnull)
-    devnull.close()
-
-    with open('/tmp/camera_test.jpg', mode='rb') as f:
+def get_image(device):
+    conf = {'device': '/dev/' + device, 'archive': TMP_IMG, 'text': device}
+    write_webcam_config(conf, TMP_WEBCAM_CONF)
+    capture(TMP_WEBCAM_CONF)
+    with open(TMP_IMG, mode='rb') as f:
         data = f.read()
-    if os.path.isfile('/tmp/camera_test.jpg'):
-        os.remove('/tmp/camera_test.jpg')
     header = [('Content-Type', 'Image/jpeg'), ('Content-Length', str(len(data)))]
 
     return header, data
 
-def avail_cams():
-    ids = []
-    for f in os.listdir('/dev/'):
-        if f.startswith('video'):
-            ids.append(f.lstrip('video'))
-    return ids
-
 def get_html():
     option_elems = ''
-    for cam in avail_cams():
+    for dev in avail_cameras():
+        cam = dev.split('/')[-1]
         option_elems += '<option value="%s">%s</option>' % (cam, cam)
 
     html = bytes(HTML_TEMPLATE % option_elems, 'utf-8')
