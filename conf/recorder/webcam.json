@@ -1,6 +1,3 @@
 {
-    "num_of_camera": 1,
-    "interval": 1,
-    "width": 640,
-    "height": 480
+    "interval": 1
 }
