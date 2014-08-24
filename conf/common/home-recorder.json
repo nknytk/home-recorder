@@ -4,8 +4,6 @@
     "eventchecker": ["simplemotion", "gpioswitch"],
     "notifier": ["mail"],
     "recorder": ["webcam", "mail"],
-    "test_on_start": 0,
-    "continue_on_error": 1,
     "server_side_token": "<Input server side token to use Android client application, otherwise blank.>",
     "client_side_token": "<Input server side token to use Android client application, otherwise blank. long and random string is desirable.>",
     "token_separator": "\n",
