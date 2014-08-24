@@ -20,6 +20,12 @@ get_ipaddr(){
   done
 }
 
+PID=$(ps aux | grep "${HRHOME}/app/home-recorder.py" | grep -v grep | awk '{print $2}')
+if [ -n "${PID}" ]; then
+  echo "You need to stop home-recorder before camera direction adjustment."
+  exit 1
+fi
+
 IPADDR=`get_ipaddr`
 ${PYTHON} ${HRHOME}/app/htmlcamera.py ${PORT} > /dev/null 2>&1 & disown
 PID=$(echo $!)
