@@ -21,6 +21,8 @@ class Mail(RecorderThread):
 
         finishtime = time() + duration
         is_last = False
+        sleep(0.1)
+
         while True:
             now = time()
             next = now + self.setting['interval']
