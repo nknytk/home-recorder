@@ -7,7 +7,7 @@ DEPENDANCIES="webcam python3-pip libjpeg8-dev"
 for pkg in ${DEPENDANCIES}; do
   dpkg -l ${pkg} > /dev/null 2>&1
   if [ $? -ne 0 ]; then
-    sudo apt-get install ${pkg}
+    sudo apt-get install -y ${pkg}
   fi
 done
 
