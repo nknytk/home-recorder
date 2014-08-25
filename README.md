@@ -35,7 +35,7 @@ typical usage
 6. Install the [client](https://github.com/nknytk/home-recorder-client) into your Android device.  
 7. Write config files.
   * Set eventcheck interval, pairing information with the client to "conf/common/home-recorder.json."  
-  * Set your mail settings to "conf/common/mail.json."  
+  * Set your mail settings to "conf/common/mail.json."  Web mails (i.e. gmail) are deprecated because they often block mail from unofficial clients. Use the account provided by internet service porviders.
 8. Run test with `./start.sh test`. Fix configs until you see "All components are OK." at last.
 9. Start home-recorder with `./start.sh`.
 
