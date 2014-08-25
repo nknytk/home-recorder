@@ -4,7 +4,7 @@
     "mail_to": "<E-mail addresses to notify events. For multiple addresses, split then by comma.",
     "server": "E-mail server hostname or IP address",
     "port": 587,
-    "datasource": "webcam",
+    "datasource": "camera",
     "subject": "HomeRecorder detected event.",
     "interval": 10
 }
