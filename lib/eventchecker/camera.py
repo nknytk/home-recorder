@@ -9,7 +9,7 @@ from .eventcheckerbase import EventCheckerBase
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../util'))
 from webcam import avail_cameras, capture, write_webcam_config
 
-class SimpleMotion(EventCheckerBase):
+class Camera(EventCheckerBase):
     def __init__(self):
         EventCheckerBase.__init__(self)
 
@@ -93,7 +93,7 @@ class SimpleMotion(EventCheckerBase):
 
 if __name__ == '__main__':
     from time import sleep
-    C = SimpleMotion()
+    C = Camera()
     while True:
         C.check()
         sleep(1)

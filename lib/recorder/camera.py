@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
 from webcam import avail_cameras, capture, write_webcam_config
 
 
-class Webcam(RecorderThread):
+class Camera(RecorderThread):
     def record(self, eventid, duration):
         storage = os.path.join(self.datadir, eventid)
         if os.path.exists(storage):
@@ -61,6 +61,6 @@ class Webcam(RecorderThread):
 
 
 if __name__ == '__main__':
-    w = Webcam()
+    w = Camera()
     w.start_recording('test', 10)
     w.join()
