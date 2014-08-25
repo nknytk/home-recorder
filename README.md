@@ -23,6 +23,8 @@ Detect, record and notifiy events in your home for your security.
 
 ## Usage
 
+typical usage
+
 1. Setup Raspbian on a raspberry pi or Ubuntu on a PC.  
 2. Connect web cameras with the device.  
 3. Download home-recorder.
