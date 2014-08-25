@@ -2,6 +2,7 @@
 
 import os
 import sys
+from threading import Thread
 from PIL import Image
 
 from .eventcheckerbase import EventCheckerBase
@@ -25,33 +26,37 @@ class SimpleMotion(EventCheckerBase):
 
     def reset(self):
         self.filenames = {}
-        self.prev_pxls = {}
+        self.pxls = {}
         for dev in self.devices:
             devname = dev.split('/')[-1]
             self.filenames[devname] = {
                 'newest': os.path.join(self.setting.get('tmpdir', '/run/shm'), devname + '.jpg'),
                 'previous': os.path.join(self.setting.get('tmpdir', '/run/shm'), devname + '_prev.jpg'), 
             }
-            pxs = self.getpixels(devname)
-            self.prev_pxls[devname] = [pxs, pxs]
+            self.pxls[devname] = []
+            self.update_pixels(devname)
+            self.pxls[devname].append(self.pxls[devname][0])
 
     def check(self):
         event_occurred = False
         event_devices = []
         files = []
 
-        for dev in self.devices:
-            devname = dev.split('/')[-1]
-            os.rename(self.filenames[devname]['newest'], self.filenames[devname]['previous'])
-            new_pxls = self.getpixels(devname)
-            if self.diffsize(new_pxls, self.prev_pxls[devname][0]) > self.setting['diff_threshold'] \
-               and self.diffsize(new_pxls, self.prev_pxls[devname][1]) > self.setting['diff_threshold']:
+        camera_threads = {}
+        devnames = [dev.split('/')[-1] for dev in self.devices]
+        for devname in devnames:
+            th = Thread(target=self.update_pixels, args=(devname, ))
+            th.start()
+            camera_threads[devname] = th
+
+        for devname in devnames:
+            camera_threads[devname].join()
+            if self.diffsize(self.pxls[devname][0], self.pxls[devname][1]) > self.setting['diff_threshold'] \
+               and self.diffsize(self.pxls[devname][0], self.pxls[devname][2]) > self.setting['diff_threshold']:
                event_occurred = True
                event_devices.append(devname)
                files.append(self.filenames[devname]['previous'])
                files.append(self.filenames[devname]['newest'])
-            del(self.prev_pxls[devname][1])
-            self.prev_pxls[devname].insert(0, new_pxls)
 
         if event_devices:
             msg = '%s detected motion event. See attached images.' % ','.join(event_devices)
@@ -59,7 +64,11 @@ class SimpleMotion(EventCheckerBase):
             msg = 'No motion event.'
         return (event_occurred, msg, files)
 
-    def getpixels(self, devname):
+    def update_pixels(self, devname):
+        if len(self.pxls[devname]) > 2:
+            del(self.pxls[devname][2])
+            os.rename(self.filenames[devname]['newest'], self.filenames[devname]['previous'])
+
         conffile = os.path.join(self.setting.get('tmpdir', '/run/shm'), devname + '.conf')
         conf = {
             'width': self.width,
@@ -73,7 +82,7 @@ class SimpleMotion(EventCheckerBase):
         img = Image.open(self.filenames[devname]['newest'])
         pxs = [img.getpixel(cood) for cood in self.target_pixels]
         img.close()
-        return pxs
+        self.pxls[devname].insert(0, pxs)
 
     def diffsize(self, pxs1, pxs2):
         ds = 0
