@@ -39,6 +39,10 @@ typical usage
 8. Run test with `./start.sh test`. Fix configs until you see "All components are OK." at last.
 9. Start home-recorder with `./start.sh`.
 
+## Config
+
+Under construction
+
 ## ToDo list
 
 * Write README  
