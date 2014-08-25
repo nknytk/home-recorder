@@ -19,9 +19,9 @@ class Mail(RecorderThread):
                                 eventid)
         processed_files = set()
 
+        sleep(0.1)
         finishtime = time() + duration
         is_last = False
-        sleep(0.1)
 
         while True:
             now = time()
