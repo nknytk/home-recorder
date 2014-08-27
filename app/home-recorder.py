@@ -48,6 +48,9 @@ def testrun(setting):
     print('Initialize recorders.')
     recorders = load_components(setting, 'recorder')
     print('OK\n')
+    print('Initialize error handler.')
+    err_handler = ErrorHandler(setting, notifiers)
+    print('OK\n')
 
     print('Check if owner is at home.')
     owner_is_in_lan = check_owner_is_in_lan(setting, False)
@@ -69,12 +72,18 @@ def testrun(setting):
         recorder.join()
     print('OK\n')
 
+    print('Run error notification for 2 times.')
+    err_handler.handle('test', 'Test notification from home-recorder')
+    err_handler.handle('test', 'Test notification from home-recorder')
+    print('OK\n')
+
     print('All components are OK.')
 
 def recordhome(setting):
     eventcheckers = load_components(setting, 'eventchecker')
     notifiers = load_components(setting, 'notifier')
     recorders = load_components(setting, 'recorder')
+    error_handler = ErrorHandler(setting, notifiers)
 
     eventcheck_enabled = True
     now = time()
@@ -111,12 +120,7 @@ def recordhome(setting):
                 continue
 
         except:
-            trc = traceback.format_exc()
-            for notifier in notifiers:
-                try:
-                    notifier.notify('Error in presence check', trc)
-                except:
-                    print(traceback.format_exc())
+            error_handler.handle('presence check', traceback.format_exc())
 
         now = time()
         remaining_wait = begin + setting.get('check_interval', 1) - now
@@ -134,12 +138,7 @@ def recordhome(setting):
                     event_msgs.append(chk_res[1])
                     event_files += chk_res[2]
         except:
-            trc = traceback.format_exc()
-            for notifier in notifiers:
-                try:
-                    notifier.notify('Error in eventchecker', trc)
-                except:
-                    print(traceback.format_exc())
+            error_handler.handle('event check', traceback.format_exc())
 
         if not event_msgs:
             print('No event detected.')
@@ -161,16 +160,40 @@ def recordhome(setting):
                 recorder.start_recording(evid, setting['recording_duration'])
 
         except:
-            trc = traceback.format_exc()
-            for notifier in notifiers:
-                try:
-                    notifier.notify('Error in recorder', trc)
-                except:
-                    print(traceback.format_exc())
+            error_handler.handle('recorder', traceback.format_exc())
 
         finally:
             for recorder in recorders:
                 recorder.join()
+
+class ErrorHandler:
+    def __init__(self, setting, notifiers):
+        self.errors = {}
+        self.suppress_interval = setting.get('error_suppression_interval')
+        self.notifiers = notifiers
+
+    def handle(self, error_point, message):
+        now = time()
+        past_errors = self.errors.get(error_point, {})
+        last_error_time = past_errors.get(message, 0)
+        should_suppress = True
+        if not self.suppress_interval:
+            should_suppress = False
+        elif now > last_error_time + self.suppress_interval:
+            should_suppress = False
+        past_errors[message] = now
+        self.errors[error_point] = past_errors
+        print(message)
+
+        if should_suppress:
+            print('Suppress notification of the error above.')
+            return
+
+        try:
+            for notifier in self.notifiers:
+                notifier.notify('Error in ' + error_point, message)
+        except:
+            print(traceback.format_exc())
 
 if __name__ == '__main__':
     conffile = os.path.join(homedir, 'conf/common/home-recorder.json')

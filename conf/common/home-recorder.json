@@ -4,6 +4,7 @@
     "eventchecker": ["camera"],
     "notifier": ["mail"],
     "recorder": ["camera", "mail"],
+    "error_suppression_interval": 600,
     "server_side_token": "<Input server side token to use Android client application, otherwise blank.>",
     "client_side_token": "<Input server side token to use Android client application, otherwise blank. long and random string is desirable.>",
     "token_separator": "\n",
