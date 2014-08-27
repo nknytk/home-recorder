@@ -33,6 +33,8 @@ class Camera(EventCheckerBase):
                 'newest': os.path.join(self.setting.get('tmpdir', '/run/shm'), devname + '.jpg'),
                 'previous': os.path.join(self.setting.get('tmpdir', '/run/shm'), devname + '_prev.jpg'), 
             }
+            if os.path.isfile(self.filenames[devname]['newest']):
+                os.remove(self.filenames[devname]['newest'])
             self.pxls[devname] = []
             self.update_pixels(devname)
             self.pxls[devname].append(self.pxls[devname][0])
