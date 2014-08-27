@@ -37,7 +37,7 @@ class RecorderThread:
         finishtime = time() + duration
 
         while time() < finishtime:
-            next = time() + self.setting['interval']
+            next = time() + self.setting.get('interval', 1)
 
             self.snapshot(eventid)
 

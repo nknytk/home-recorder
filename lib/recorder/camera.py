@@ -47,7 +47,7 @@ class Camera(RecorderThread):
         finishtime = time() + duration
 
         while time() < finishtime:
-            next = time() + self.setting['interval']
+            next = time() + self.setting.get('interval', 1)
 
             capture(self.confs[devname])
             print('Captured image with ' + devname)
