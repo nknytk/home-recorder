@@ -16,9 +16,11 @@ class EventCheckerBase:
         if not os.path.exists(self.datadir):
             os.makedirs(os.path.abspath(self.datadir))
 
+        self.setting = {}
+        conf = None
         common_conf = os.path.join(self.homedir, 'conf/common/%s.json' % self.eventchecker_name)
         checker_conf = os.path.join(self.homedir, 'conf/eventchecker/%s.json' % self.eventchecker_name)
-        conf = common_conf if os.path.isfile(common_conf) else checker_conf
+        conf = checker_conf if os.path.isfile(checker_conf) else common_conf
         with open(conf, encoding='utf-8') as f:
             self.setting = loads(f.read())
         

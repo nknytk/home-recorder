@@ -18,9 +18,11 @@ class RecorderThread:
         if not os.path.exists(self.datadir):
             os.makedirs(os.path.abspath(self.datadir))
 
+        self.setting = {}
+        conf = None
         common_conf = os.path.join(self.homedir, 'conf/common/%s.json' % self.recorder_name)
         recorder_conf = os.path.join(self.homedir, 'conf/recorder/%s.json' % self.recorder_name)
-        conf = common_conf if os.path.isfile(common_conf) else recorder_conf
+        conf = recorder_conf if os.path.isfile(recorder_conf) else common_conf
         with open(conf, encoding='utf-8') as f:
             self.setting = loads(f.read())
         

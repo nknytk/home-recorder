@@ -13,9 +13,11 @@ class NotifierBase:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.homedir = os.path.join(current_dir, '../../')
 
+        self.setting = {}
+        conf = None
         common_conf = os.path.join(self.homedir, 'conf/common/%s.json' % self.notifier_name)
-        nontifier_conf = os.path.join(self.homedir, 'conf/notifier/%s.json' % self.notifier_name)
-        conf = common_conf if os.path.isfile(common_conf) else notifier_conf
+        notifier_conf = os.path.join(self.homedir, 'conf/notifier/%s.json' % self.notifier_name)
+        conf = notifier_conf if os.path.isfile(notifier_conf) else common_conf
         with open(conf, encoding='utf-8') as f:
             self.setting = loads(f.read())
         
