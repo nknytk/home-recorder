@@ -8,7 +8,7 @@ from pluginbase import PluginBase
 
 class NotifierBase(PluginBase):
     def __init__(self):
-        self.modtype = 'eventchecker'
+        self.modtype = 'notifier'
         PluginBase.__init__(self)
 
     def notify(self, eventid, duration):

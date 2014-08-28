@@ -11,7 +11,7 @@ from pluginbase import PluginBase
 
 class RecorderThread(PluginBase):
     def __init__(self):
-        self.modtype = 'eventchecker'
+        self.modtype = 'recorder'
         PluginBase.__init__(self)
 
     def start_recording(self, eventid, duration):
