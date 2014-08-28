@@ -31,6 +31,8 @@ class Mail(RecorderThread):
 
             new_files = self.get_newfiles(eventdir, processed_files)
             if not new_files:
+                if is_last:
+                    break
                 sleep(now + self.setting['interval'] - time())
                 continue
 
