@@ -1,31 +1,19 @@
 # coding: utf-8
 
 import os
-from json import loads
 from threading import Thread
 from time import sleep, time
 
-class RecorderThread:
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
+from pluginbase import PluginBase
+
+
+class RecorderThread(PluginBase):
     def __init__(self):
-        objname = self.__str__()
-        endidx = objname.find(' object at ')
-        startidx = objname.rfind('.', 0, endidx) + 1
-        self.recorder_name = objname[startidx:endidx].lower()
+        self.modtype = 'eventchecker'
+        PluginBase.__init__(self)
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.homedir = os.path.join(current_dir, '../../')
-        self.datadir = os.path.join(self.homedir, 'data', 'recorder', self.recorder_name)
-        if not os.path.exists(self.datadir):
-            os.makedirs(os.path.abspath(self.datadir))
-
-        self.setting = {}
-        conf = None
-        common_conf = os.path.join(self.homedir, 'conf/common/%s.json' % self.recorder_name)
-        recorder_conf = os.path.join(self.homedir, 'conf/recorder/%s.json' % self.recorder_name)
-        conf = recorder_conf if os.path.isfile(recorder_conf) else common_conf
-        with open(conf, encoding='utf-8') as f:
-            self.setting = loads(f.read())
-        
     def start_recording(self, eventid, duration):
         self.recorder_thread = Thread(target=self.record, args=(eventid, duration))
         self.recorder_thread.start()
