@@ -92,7 +92,7 @@ def recordhome(setting):
 
         # If the owner's client is in LAN, disable event check, notification and recording.
         try:
-            print('Check if owner is at home.')
+            #print('Check if owner is at home.')
             owner_is_in_lan = check_owner_is_in_lan(setting, eventcheck_enabled)
 
             if eventcheck_enabled:
@@ -100,11 +100,13 @@ def recordhome(setting):
                     print('Owner is at home. Disable event check.')
                     eventcheck_enabled = False
                 else:
-                    print('Owner is NOT at home. Event check is kept enablsed.')
+                    pass
+                    #print('Owner is NOT at home. Event check is kept enablsed.')
 
             else:
                 if owner_is_in_lan:
-                    print('Owner is at home. Event check is kept disabled.')
+                    pass
+                    #print('Owner is at home. Event check is kept disabled.')
                 else:
                     print('Owner is NOT at home. Enable event check.')
                     eventcheck_enabled = True
@@ -115,7 +117,7 @@ def recordhome(setting):
                 now = time()
                 remaining_wait = begin + setting.get('presence_check_interval', 10) - now
                 if remaining_wait > 0:
-                    print('Wait ' + str(remaining_wait) + ' sec for next check')
+                    #print('Wait ' + str(remaining_wait) + ' sec for next check')
                     sleep(remaining_wait)
                 continue
 
@@ -128,7 +130,7 @@ def recordhome(setting):
             sleep(remaining_wait)
 
         # Check events
-        print('Start event detection.')
+        #print('Start event detection.')
         event_msgs = []
         event_files = []
         try:
@@ -142,7 +144,7 @@ def recordhome(setting):
             error_handler.handle('event check', traceback.format_exc())
 
         if not event_msgs:
-            print('No event detected.')
+            #print('No event detected.')
             continue
         print('Event detected: ' + ' '.join(event_msgs))
 
