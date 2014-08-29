@@ -68,13 +68,22 @@ def token_pair(setting):
 if __name__ == '__main__':
     from time import sleep
     from json import loads
+    from threading import Timer
     with open('../../conf/common/home-recorder.json') as f:
         st = loads(f.read())
+
+    max_failcount = 0
+    failcount =0
+
     while True:
         sd, rv = token_pair(st)
         send(byte_msg=sd)
-        s = time()
-        print(receive(expected_data=rv, timeout=0.5))
-        print(time() - s)
-        print('----')
+        res = receive(expected_data=rv, timeout=1)
+        if res:
+            failcount = 0
+        else:
+            failcount += 1
+            if failcount > max_failcount:
+                max_failcount = failcount
+                print(max_failcount)
         sleep(1)
