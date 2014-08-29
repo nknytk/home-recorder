@@ -133,6 +133,7 @@ def recordhome(setting):
         event_files = []
         try:
             for checker in eventcheckers:
+                checker.load_conf()
                 chk_res = checker.check()
                 if chk_res[0]:
                     event_msgs.append(chk_res[1])
@@ -150,6 +151,7 @@ def recordhome(setting):
         print('Start notification and recording. Event iD: ' + evid)
         for notifier in notifiers:
             try:
+                notifier.load_conf()
                 notifier.notify(evid, '\n'.join(event_msgs), event_files)
             except:
                 print(traceback.format_exc())
@@ -157,6 +159,7 @@ def recordhome(setting):
         # Record after notification
         try:
             for recorder in recorders:
+                recorder.load_conf()
                 recorder.start_recording(evid, setting['recording_duration'])
 
         except:
@@ -191,6 +194,7 @@ class ErrorHandler:
 
         try:
             for notifier in self.notifiers:
+                notifier.load_conf()
                 notifier.notify('Error in ' + error_point, message)
         except:
             print(traceback.format_exc())
