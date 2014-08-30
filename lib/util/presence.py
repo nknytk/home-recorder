@@ -4,8 +4,10 @@ import hashlib
 import random
 import socket
 import string
-from threading import Timer
 from time import time
+
+SEPERATOR = '\n'
+HASH_ALGORITHM = 'sha256'
 
 
 def send(ip='<broadcast>', port=19201, byte_msg=b''):
@@ -44,18 +46,15 @@ def receive(ip='', port=19201, expected_data=b'',timeout=1):
 
     return responder_ips
 
-def token_pair(setting):
-    if not (setting.get('server_side_token') and setting.get('client_side_token')):
-        return None, None
-
+def token_pair(server_token, client_token, repetition):
     avail_chars = string.ascii_letters + string.digits
     random_token = ''.join([random.choice(avail_chars) for i in range(64)])
-    send_token = setting['server_side_token'] + setting['token_separator'] + random_token
-    recv_token = setting['client_side_token'] + setting['token_separator'] + random_token
+    send_token = server_token + SEPERATOR + random_token
+    recv_token = client_token + SEPERATOR + random_token
 
-    hasher = getattr(hashlib, setting.get('token_digest_algolithm', 'sha256'))
+    hasher = getattr(hashlib, HASH_ALGORITHM)
     recv_digest = bytes(recv_token, 'utf-8')
-    for i in range(setting.get('token_digest_repetition', 300)):
+    for i in range(repetition):
         h = hasher()
         h.update(recv_digest)
         recv_digest = h.digest()
@@ -77,6 +76,7 @@ if __name__ == '__main__':
         sd, rv = token_pair(st)
         send(byte_msg=sd)
         res = receive(expected_data=rv, timeout=1)
+        print(res)
         if res:
             failcount = 0
         else:

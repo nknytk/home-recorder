@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 from json import loads
+from threading import Thread
 from time import localtime, sleep, strftime, time
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,21 +21,6 @@ def load_components(setting, component_name):
                 components.append(getattr(mod, attr)())
 
     return components
-
-def check_owner_is_in_lan(setting, eventcheck_enabled):
-    server_token, client_digest = presence.token_pair(setting)
-    if not server_token:
-        return False
-
-    max_retry = 1 if eventcheck_enabled else setting.get('presence_check_max_retry', 10)
-    for i in range(max_retry):
-        presence.send(byte_msg=server_token)
-        owner_is_in_lan = presence.receive(expected_data=client_digest,
-                                           timeout=setting.get('presence_check_timeout', 0.5))
-        if owner_is_in_lan:
-            break
-
-    return owner_is_in_lan
 
 def testrun(setting):
     print('Start test run.')
@@ -85,52 +71,27 @@ def recordhome(setting):
     recorders = load_components(setting, 'recorder')
     error_handler = ErrorHandler(setting, notifiers)
 
-    eventcheck_enabled = True
-    now = time()
+    detection_switcher = AutoEventCheckSwitcher(setting)
+
+    skipped_last = False
+    next_loop = 0
     while True:
-        begin = time()
-
-        # If the owner's client is in LAN, disable event check, notification and recording.
-        try:
-            #print('Check if owner is at home.')
-            owner_is_in_lan = check_owner_is_in_lan(setting, eventcheck_enabled)
-
-            if eventcheck_enabled:
-                if owner_is_in_lan:
-                    print('Owner is at home. Disable event check.')
-                    eventcheck_enabled = False
-                else:
-                    pass
-                    #print('Owner is NOT at home. Event check is kept enablsed.')
-
-            else:
-                if owner_is_in_lan:
-                    pass
-                    #print('Owner is at home. Event check is kept disabled.')
-                else:
-                    print('Owner is NOT at home. Enable event check.')
-                    eventcheck_enabled = True
-                    for ec in eventcheckers:
-                        ec.reset()
-
-            if not eventcheck_enabled:
-                now = time()
-                remaining_wait = begin + setting.get('presence_check_interval', 10) - now
-                if remaining_wait > 0:
-                    #print('Wait ' + str(remaining_wait) + ' sec for next check')
-                    sleep(remaining_wait)
-                continue
-
-        except:
-            error_handler.handle('presence check', traceback.format_exc())
-
-        now = time()
-        remaining_wait = begin + setting.get('check_interval', 1) - now
+        remaining_wait = next_loop - time()
         if remaining_wait > 0:
             sleep(remaining_wait)
+        next_loop = time() + setting.get('check_interval', 1)
+
+        if not detection_switcher.eventcheck_enabled():
+            if not skipped_last:
+                print('Disable Event check.')
+            skipped_last = True
+            continue
+
+        if skipped_last:
+            print('Enable Event check.')
+        skipped_last = False
 
         # Check events
-        #print('Start event detection.')
         event_msgs = []
         event_files = []
         try:
@@ -200,6 +161,49 @@ class ErrorHandler:
                 notifier.notify('Error in ' + error_point, message)
         except:
             print(traceback.format_exc())
+
+class AutoEventCheckSwitcher:
+    def __init__(self, setting):
+        self.status = {}
+        self.responder_ips = set()
+        self.max_retry = setting.get('presence_check_max_retry', 10)
+        self.timeout = setting.get('presence_check_timeout', 0.5)
+        self.interval = setting.get('presence_check_interval', 10)
+
+        self.s_token = setting.get('server_side_token')
+        self.c_token = setting.get('client_side_token')
+        self.repetition = setting.get('repetition', 300)
+
+        if self.s_token and self.c_token and isinstance(self.repetition, int):
+            self.update_status()
+            t = Thread(target=self.auto_switch)
+            t.start()
+
+    def auto_switch(self):
+        while True:
+            start_time = time()
+            self.update_status()
+            intvl = 1 if self.status['enabled'] else self.interval
+            remainig_interval = start_time + intvl - time()
+            if remainig_interval > 0:
+                sleep(remainig_interval)
+
+    def update_status(self):
+        current_responders = set()
+        for i in range(self.max_retry):
+            server_token, client_digest = presence.token_pair(self.s_token, self.c_token, self.repetition)
+            presence.send(byte_msg=server_token)
+            current_responders.update(presence.receive(expected_data=client_digest, timeout=self.timeout))
+            if not self.responder_ips - current_responders:
+                break
+        self.responder_ips = current_responders
+
+        # if registered clients are in LAN, disable event check
+        self.status['enabled'] = False if self.responder_ips else True
+
+    def eventcheck_enabled(self):
+        return self.status['enabled']
+
 
 if __name__ == '__main__':
     conffile = os.path.join(homedir, 'conf/common/home-recorder.json')
