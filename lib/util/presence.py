@@ -22,7 +22,7 @@ def receive(ip='', port=19201, expected_data=b'',timeout=1):
     sock.settimeout(timeout)
     sock.bind((ip, port))
 
-    received_expected = False
+    responder_ips = []
     start_time = time()
     while True:
         try:
@@ -31,11 +31,9 @@ def receive(ip='', port=19201, expected_data=b'',timeout=1):
             break
 
         if data == expected_data:
-            received_expected = True
-            break
+            responder_ips.append(addr[0])
 
-        now = time()
-        remaining_wait = start_time + timeout - now
+        remaining_wait = start_time + timeout - time()
         if remaining_wait > 0:
             sock.settimeout(remaining_wait)
         else:
@@ -44,7 +42,7 @@ def receive(ip='', port=19201, expected_data=b'',timeout=1):
     sock.close()
     del(sock)
 
-    return received_expected
+    return responder_ips
 
 def token_pair(setting):
     if not (setting.get('server_side_token') and setting.get('client_side_token')):
