@@ -89,6 +89,8 @@ def recordhome(setting):
 
         if skipped_last:
             print('Enable Event check.')
+            for checker in eventcheckers:
+                checker.reset()
         skipped_last = False
 
         # Check events
