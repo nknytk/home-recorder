@@ -38,9 +38,8 @@ def testrun(setting):
     err_handler = ErrorHandler(setting, notifiers)
     print('OK\n')
 
-    print('Check if owner is at home.')
-    owner_is_in_lan = check_owner_is_in_lan(setting, False)
-    print(owner_is_in_lan)
+    print('Start checking if owner is at home.')
+    detection_switcher = AutoEventCheckSwitcher(setting)
     print('OK\n')
 
     print('Run event checks.')
@@ -61,6 +60,10 @@ def testrun(setting):
     print('Run error notification for 2 times.')
     err_handler.handle('test', 'Test notification from home-recorder')
     err_handler.handle('test', 'Test notification from home-recorder')
+    print('OK\n')
+
+    print('Stop checking if owner is at home.')
+    detection_switcher.stop()
     print('OK\n')
 
     print('All components are OK.')
@@ -178,11 +181,13 @@ class AutoEventCheckSwitcher:
 
         if self.s_token and self.c_token and isinstance(self.repetition, int):
             self.update_status()
-            t = Thread(target=self.auto_switch)
-            t.start()
+            self.t = Thread(target=self.auto_switch)
+            self.t.start()
 
     def auto_switch(self):
         while True:
+            if self.status.get('stop'):
+                break
             start_time = time()
             self.update_status()
             intvl = 1 if self.status['enabled'] else self.interval
@@ -205,6 +210,10 @@ class AutoEventCheckSwitcher:
 
     def eventcheck_enabled(self):
         return self.status['enabled']
+
+    def stop(self):
+        self.status['stop'] = True
+        self.t.join()
 
 
 if __name__ == '__main__':
