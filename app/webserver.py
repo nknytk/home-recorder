@@ -3,7 +3,7 @@
 import os
 import sys
 import traceback
-from wsgiref.simple_server import make_seraver, WSGIRequestHandler
+from wsgiref.simple_server import make_server, WSGIRequestHandler
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
@@ -18,28 +18,24 @@ STATUS_DICT = {
 }
 
 
-def run_server(switch_obj):
+def run_server(switch_obj=None, port=8071):
     class DetectionSwitchHandler(WSGIRequestHandler):
         def get_environ(self):
             env = WSGIRequestHandler.get_environ(self)
             env['detection_switcher'] = switch_obj
             return env
 
-    svr = make_server('', 8071, routing_app, handler_class=DetectionSwitchHandler)
+    svr = make_server('', port, routing_app, handler_class=DetectionSwitchHandler)
     svr.serve_forever()
 
 def routing_app(env, start_response):
     switch = env['detection_switcher']
-    if not env.get('REMOTE_ADDR', '') in switch.responder_ips:
-        full_status_code, header = make_error(401)
-        start_response(full_statu_code, header)
-        return [full_status_code]
+    if switch and not env.get('REMOTE_ADDR', '') in switch.responder_ips:
+        return _return_error(start_response, 401)
 
     func = get_func_from_path(env['PATH_INFO'])
     if not func:
-        full_status_code, header = make_error(404)
-        start_response(full_statu_code, header)
-        return [full_status_code]
+        return _return_error(start_response, 404)
 
     try:
         header, content = func(env)
@@ -47,27 +43,32 @@ def routing_app(env, start_response):
         return [content]
     except:
         print(traceback.format_exc())
-        full_status_code, header = make_error(500)
-        start_response(full_statu_code, header)
-        return [full_status_code]
+        return _return_error(start_response, 500)
 
-def get_func_from_pathi(path_info):
-    paths = env['PATH_INFO'].strip('/').split('/')
-    if len(paths) >=2:
+def get_func_from_path(path_info):
+    paths = path_info.strip('/').split('/')
+    if len(paths) >= 2 and not paths[1].startswith('_'):
         resource, method = paths[0:2]
     else:
         return None
 
     try:
-        app = __import__('webapp.' + resource)
-        func = app.getattr(method)
-    except:
+        app = __import__('webapp.' + resource, fromlist=[resource])
+        func = getattr(app, method)
+    except (AttributeError, ImportError):
         return None
 
     return func
 
-def make_error(status_code_int):
-    content = STATUS_DICT.get(status_code_int, '404 Not Found')
+def _return_error(start_response, status_code_int):
+    status_code = STATUS_DICT.get(status_code_int, '404 Not Found')
+    content = bytes(status_code, 'utf-8')
     header = [('Content-Type', 'text/plain; charset=UTF-8'),
               ('Content-Length', str(len(content)))]
-    return (header, content)
+    start_response(status_code, header)
+    return [content]
+
+
+if __name__ == '__main__':
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8701
+    run_server(port=port)

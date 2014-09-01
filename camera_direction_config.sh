@@ -27,11 +27,11 @@ if [ -n "${PID}" ]; then
 fi
 
 IPADDR=`get_ipaddr`
-${PYTHON} ${HRHOME}/app/htmlcamera.py ${PORT} > /dev/null 2>&1 & disown
+${PYTHON} ${HRHOME}/app/webserver.py ${PORT} > /dev/null 2>&1 & disown
 PID=$(echo $!)
 
 echo "Started web camera server. Access"
-echo "    http://${IPADDR}:${PORT}"
+echo "    http://${IPADDR}:${PORT}/camera/html"
 echo "with your browser, and adjust camera direction."
 echo
 echo "Press Enter to finish web camera server."

@@ -5,7 +5,7 @@ import sys
 import time
 from urllib.parse import parse_qsl
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../lib/util'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
 from webcam import avail_cameras, capture, write_webcam_config
 
 TMP_WEBCAM_CONF = '/tmp/tmp_webcam_config'
@@ -28,7 +28,7 @@ if (imgdiv.childNodes.length > 1) {
 
 var device = document.getElementById("device").value;
 var newimg = document.createElement("img");
-newimg.src = "?device=" + device + "&random=" + Math.random();
+newimg.src = "/camera/image?device=" + device + "&random=" + Math.random();
 newimg.style.visibility ="hidden";
 imgdiv.appendChild(newimg);
 
@@ -42,8 +42,18 @@ keep_updating_img();
 </html>"""
 
 
-def get_image(device):
-    conf = {'device': '/dev/' + device, 'archive': TMP_IMG, 'text': device}
+def devicelist(env):
+    devices = '\n'.join(avail_cameras())
+    content = bytes(devices, 'utf-8')
+    header = [('Content-Type', 'text/plain'), ('Content-Lentgh', str(len(content)))]
+    return header, content
+
+def image(env):
+    devname = dict(parse_qsl(env.get('QUERY_STRING', ''))).get('device')
+    if not devname:
+        return [('Content-Type', 'Image/jpeg'), ('Content-Lentgh', '0')], b''
+
+    conf = {'device': '/dev/' + devname, 'archive': TMP_IMG, 'text': devname}
     write_webcam_config(conf, TMP_WEBCAM_CONF)
     capture(TMP_WEBCAM_CONF)
     with open(TMP_IMG, mode='rb') as f:
@@ -52,7 +62,7 @@ def get_image(device):
 
     return header, data
 
-def get_html():
+def html(env):
     option_elems = ''
     for dev in avail_cameras():
         cam = dev.split('/')[-1]
@@ -61,28 +71,3 @@ def get_html():
     html = bytes(HTML_TEMPLATE % option_elems, 'utf-8')
     header = [('Content-Type', 'text/html'), ('Content-Lentgh', str(len(html)))]
     return header, html
-
-def app(env, sr):
-    s = time.time()
-    qd = dict(parse_qsl(env.get('QUERY_STRING', '')))
-    devid = qd.get('device')
-    finish = qd.get('finish');
-
-    if env.get('PATH_INFO', '') == '/favicon.ico':
-        data = b''
-        header = [('Content-Type', 'text/plain'), ('Content-Length', '0')]
-    elif devid:
-        header, data = get_image(devid)
-    else:
-        header, data = get_html()
-
-    sr('200 OK', header)
-    print(time.time() - s)
-    return [data]
-
-
-if __name__ == '__main__':
-    from wsgiref.simple_server import make_server
-    port = 8071 if len(sys.argv) == 1 else int(sys.argv[1])
-    svr = make_server('', port, app)
-    svr.serve_forever()
