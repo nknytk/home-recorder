@@ -8,8 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
 from webcam import avail_cameras, capture, write_webcam_config
 
 CAMERA_STATUS = {}
-TMP_WEBCAM_CONF = '/run/shm/home-recorder/tmp_webcam_config'
-TMP_IMG = '/run/shm/home-recorder/webcam_tmp_img.jpg'
+CONF_TMPL = '/run/shm/home-recorder/tmp_%s_conf'
+IMGPATH_TMPL = '/run/shm/home-recorder/tmp_%s.jpg'
 
 HTML_TEMPLATE="""<html>
 <head><title>camera direction</title></head>
@@ -61,10 +61,12 @@ def image(env):
         device_status['in_use'] =True
         CAMERA_STATUS[devname] = device_status
     
-        conf = {'device': '/dev/' + devname, 'archive': TMP_IMG, 'text': devname}
-        write_webcam_config(conf, TMP_WEBCAM_CONF)
-        capture(TMP_WEBCAM_CONF)
-        with open(TMP_IMG, mode='rb') as f:
+        imgpath = IMGPATH_TMPL % devname
+        confpath = CONF_TMPL % devname
+        conf = {'device': '/dev/' + devname, 'archive': imgpath, 'text': devname}
+        write_webcam_config(conf, confpath)
+        capture(confpath)
+        with open(imgpath, mode='rb') as f:
             data = f.read()
 
         device_status['data'] = data
