@@ -2,14 +2,14 @@
 
 import os
 import sys
-import time
 from urllib.parse import parse_qsl
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
 from webcam import avail_cameras, capture, write_webcam_config
 
-TMP_WEBCAM_CONF = '/tmp/tmp_webcam_config'
-TMP_IMG = '/tmp/webcam_tmp_img.jpg'
+CAMERA_STATUS = {}
+TMP_WEBCAM_CONF = '/run/shm/home-recorder/tmp_webcam_config'
+TMP_IMG = '/run/shm/home-recorder/webcam_tmp_img.jpg'
 
 HTML_TEMPLATE="""<html>
 <head><title>camera direction</title></head>
@@ -49,17 +49,29 @@ def devicelist(env):
     return header, content
 
 def image(env):
+    t0 = time()
     devname = dict(parse_qsl(env.get('QUERY_STRING', ''))).get('device')
     if not devname:
         return [('Content-Type', 'Image/jpeg'), ('Content-Lentgh', '0')], b''
 
-    conf = {'device': '/dev/' + devname, 'archive': TMP_IMG, 'text': devname}
-    write_webcam_config(conf, TMP_WEBCAM_CONF)
-    capture(TMP_WEBCAM_CONF)
-    with open(TMP_IMG, mode='rb') as f:
-        data = f.read()
-    header = [('Content-Type', 'Image/jpeg'), ('Content-Length', str(len(data)))]
+    device_status = CAMERA_STATUS.get(devname, {})
+    if device_status.get('in_use', False):
+        data = device_status.get('data', b'')
 
+    else:
+        device_status['in_use'] =True
+        CAMERA_STATUS[devname] = device_status
+    
+        conf = {'device': '/dev/' + devname, 'archive': TMP_IMG, 'text': devname}
+        write_webcam_config(conf, TMP_WEBCAM_CONF)
+        capture(TMP_WEBCAM_CONF)
+        with open(TMP_IMG, mode='rb') as f:
+            data = f.read()
+
+        device_status['data'] = data
+        device_status['in_use'] = False
+
+    header = [('Content-Type', 'Image/jpeg'), ('Content-Length', str(len(data)))]
     return header, data
 
 def html(env):

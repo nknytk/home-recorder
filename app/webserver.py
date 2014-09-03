@@ -3,7 +3,8 @@
 import os
 import sys
 import traceback
-from wsgiref.simple_server import make_server, WSGIRequestHandler
+from socketserver import ThreadingMixIn
+from wsgiref.simple_server import make_server, WSGIRequestHandler, WSGIServer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
@@ -18,14 +19,17 @@ STATUS_DICT = {
 }
 
 
+class ThreadingServer(ThreadingMixIn, WSGIServer):
+    pass
+
 def run_server(switch_obj=None, port=8071):
-    class DetectionSwitchHandler(WSGIRequestHandler):
+    class SwitchHandler(WSGIRequestHandler):
         def get_environ(self):
             env = WSGIRequestHandler.get_environ(self)
             env['detection_switcher'] = switch_obj
             return env
 
-    svr = make_server('', port, routing_app, handler_class=DetectionSwitchHandler)
+    svr = make_server('', port, routing_app, ThreadingServer, SwitchHandler)
     svr.serve_forever()
 
 def routing_app(env, start_response):
