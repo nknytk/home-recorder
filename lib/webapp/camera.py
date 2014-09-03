@@ -49,7 +49,6 @@ def devicelist(env):
     return header, content
 
 def image(env):
-    t0 = time()
     devname = dict(parse_qsl(env.get('QUERY_STRING', ''))).get('device')
     if not devname:
         return [('Content-Type', 'Image/jpeg'), ('Content-Lentgh', '0')], b''
