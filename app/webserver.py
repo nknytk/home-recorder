@@ -3,6 +3,7 @@
 import os
 import sys
 import traceback
+import socket
 from socketserver import ThreadingMixIn
 from wsgiref.simple_server import make_server, WSGIRequestHandler, WSGIServer
 
@@ -17,6 +18,16 @@ STATUS_DICT = {
    404: '404 Not Found',
    500: '500 Internal Server Error'
 }
+LOCAL_IPs = []
+try:
+    LOCAL_IPs.append(socket.gethostbyname('localhost'))
+    LOCAL_IPs.append(socket.gethostbyname(socket.gethostname()))
+    dummy_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    dummy_socket.connect(('google.com', 0))
+    LOCAL_IPs.append(dummy_socket.getsockname()[0])
+    dummy_socket.close()
+except:
+    print(traceback.format_exc())
 
 
 class ThreadingServer(ThreadingMixIn, WSGIServer):
@@ -34,7 +45,8 @@ def run_server(switch_obj=None, port=8071):
 
 def routing_app(env, start_response):
     switch = env['detection_switcher']
-    if switch and not env.get('REMOTE_ADDR', '') in switch.responder_ips:
+    rmip = env.get('REMOTE_ADDR', '')
+    if switch and not (rmip in switch.responder_ips or rmip in LOCAL_IPs):
         return _return_error(start_response, 401)
 
     func = get_func_from_path(env['PATH_INFO'])
