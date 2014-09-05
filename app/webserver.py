@@ -10,6 +10,8 @@ from wsgiref.simple_server import make_server, WSGIRequestHandler, WSGIServer
 current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
 sys.path.insert(0, os.path.join(homedir, 'lib'))
+sys.path.append(os.path.join(homedir, 'lib/util'))
+from customerrors import BadRequest
 
 STATUS_DICT = {
    200: '200 OK',
@@ -57,6 +59,10 @@ def routing_app(env, start_response):
         header, content = func(env)
         start_response('200 OK', header)
         return [content]
+    except BadRequest as e:
+        print(e)
+        print(traceback.format_exc())
+        return _return_error(start_response, 400)
     except:
         print(traceback.format_exc())
         return _return_error(start_response, 500)
