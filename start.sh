@@ -12,5 +12,5 @@ fi
 if [ "$1" == "test" ]; then
   sudo ${PYTHON} ${HRHOME}/app/home-recorder.py test
 else
-  sudo ${PYTHON} ${HRHOME}/app/home-recorder.py >> ${HRHOME}/log.log 2>&1 & disown
+  sudo ${PYTHON} -u ${HRHOME}/app/home-recorder.py >> ${HRHOME}/log.log 2>&1 & disown
 fi
