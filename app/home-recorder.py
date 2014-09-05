@@ -11,6 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
 sys.path.insert(0, os.path.join(homedir, 'lib'))
 from util import presence
+from webserver import run_server
 
 def load_components(setting, component_name):
     components = []
@@ -75,6 +76,8 @@ def recordhome(setting):
     error_handler = ErrorHandler(setting, notifiers)
 
     detection_switcher = AutoEventCheckSwitcher(setting)
+    server_thread = Thread(target=run_server, args=(detection_switcher, ))
+    server_thread.start()
 
     skipped_last = False
     next_loop = 0
@@ -86,12 +89,12 @@ def recordhome(setting):
 
         if not detection_switcher.eventcheck_enabled():
             if not skipped_last:
-                print('Disable Event check.')
+                print('Paired clients are in LAN. Disable Event check.')
             skipped_last = True
             continue
 
         if skipped_last:
-            print('Enable Event check.')
+            print('No paired client is in LAN. Enable Event check.')
             for checker in eventcheckers:
                 checker.reset()
         skipped_last = False
