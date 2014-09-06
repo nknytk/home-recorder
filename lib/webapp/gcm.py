@@ -17,9 +17,9 @@ def register(env):
         raise BadRequest('No registration_id found')
 
     current_conf = _get_current_conf()
-    new_ids = list(set(current_conf.get('registration_ids', []) + [new_id]))
-    current_conf['registration_ids'] = new_ids
-    _write_conf(current_conf)
+    if new_id not in current_conf.get('registration_ids', []):
+        current_conf['registration_ids'] = new_ids.append(new_id)
+        _write_conf(current_conf)
 
     content = b'registered'
     header = [('Content-Type', 'text/plain'), ('Content-Length', str(len(content)))]
@@ -31,10 +31,11 @@ def remove(env):
         raise BadRequest('No registration_id found')
 
     current_conf = _get_current_conf()
-    id_set = set(current_conf.get('registration_ids', []))
-    id_set.discard(id2del)
-    current_conf['registration_ids'] = list(id_set)
-    _write_conf(current_conf)
+    if id2del not in current_conf.get('registration_ids', []):
+        id_set = set(current_conf.get('registration_ids', []))
+        id_set.discard(id2del)
+        current_conf['registration_ids'] = list(id_set)
+        _write_conf(current_conf)
 
     content = b'removed'
     header = [('Content-Type', 'text/plain'), ('Content-Length', str(len(content)))]
