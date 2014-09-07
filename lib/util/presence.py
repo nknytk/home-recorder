@@ -6,7 +6,7 @@ import socket
 import string
 from time import time
 
-SEPERATOR = '\n'
+SEPERATOR = '##########'
 HASH_ALGORITHM = 'sha256'
 
 
