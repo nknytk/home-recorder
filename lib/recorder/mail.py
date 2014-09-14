@@ -12,14 +12,14 @@ from util.mailutil import create_mail, send_mail
 
 class Mail(RecorderThread):
     def record(self, eventid, duration):
-        eventdir = os.path.join(self.homedir,
-                                'data',
-                                'recorder',
-                                self.setting['datasource'],
-                                eventid)
-        processed_files = set()
+        eventdirs = []
+        processed_files = {}
+        for ds in self.setting.get('datasource', []):
+            eventdir = os.path.join(self.homedir, 'data', 'recorder', ds, eventid)
+            eventdirs.append(eventdir)
+            processed_files[eventdir] = set()
 
-        sleep(0.1)
+        sleep(self.setting.get('interval', 1))
         finishtime = time() + duration
         is_last = False
 
@@ -29,24 +29,22 @@ class Mail(RecorderThread):
             if now > finishtime:
                is_last = True 
 
-            new_files = self.get_newfiles(eventdir, processed_files)
-            if not new_files:
-                if is_last:
-                    break
-                sleep(now + self.setting['interval'] - time())
-                continue
+            for dir in eventdirs:
+                new_files = self.get_newfiles(dir, processed_files[dir])
+                if not new_files:
+                    continue
 
-            mail = create_mail(mfrom=self.setting['mail_from'],
-                               mto=self.setting['mail_to'],
-                               subject=self.setting['subject'] + ' Event ID: ' + eventid,
-                               attachment_paths=new_files)
-            send_mail(mfrom=self.setting['mail_from'],
-                      mpassword=self.setting['password'],
-                      mto=self.setting['mail_to'],
-                      mserver=self.setting['server'],
-                      mport=self.setting['port'],
-                      mailcontent=mail)
-            processed_files.update(new_files)
+                mail = create_mail(mfrom=self.setting['mail_from'],
+                                   mto=self.setting['mail_to'],
+                                   subject=self.setting['subject'] + ' Event ID: ' + eventid,
+                                   attachment_paths=new_files)
+                send_mail(mfrom=self.setting['mail_from'],
+                          mpassword=self.setting['password'],
+                          mto=self.setting['mail_to'],
+                          mserver=self.setting['server'],
+                          mport=self.setting['port'],
+                          mailcontent=mail)
+                processed_files[dir].update(new_files)
 
             now = time()
             if is_last or now > finishtime:
