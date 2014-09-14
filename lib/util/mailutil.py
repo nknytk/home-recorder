@@ -41,7 +41,7 @@ def attach2mail(mailcontent, filepaths):
         elif maintype == 'text':
             attachment = MIMEText(content, subtype, 'utf-8')
         elif maintype == 'audio':
-            attachment = MIMEAudioe(content, subtype, filename=fname)
+            attachment = MIMEAudio(content, subtype, filename=fname)
         else:
             attachment = MIMEApplicatione(content, subtype, filename=fname)
 
