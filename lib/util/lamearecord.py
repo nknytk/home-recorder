@@ -3,7 +3,9 @@
 import os
 import re
 import shlex
+from time import sleep
 from subprocess import Popen, PIPE, call, check_output
+from threading import Timer
 
 
 def avail_mikes():
@@ -43,3 +45,45 @@ def record_mp3(hw_id, duration, filename):
     lame_comm = 'lame -V2 - ' + filename
 
     check_output('%s | %s' % (arecord_comm, lame_comm), shell=True)
+
+class WaveGenerator:
+    def __init__(self, buf_size=1024, poll_interval=0.1):
+        self.procs = {}
+        self.buf_size = buf_size
+        self.poll_interval = poll_interval
+
+    def listen(self, hw_id, duration=10):
+        buf = b''
+        if self.procs.get(hw_id) and self.procs[hw_id].poll() == None:
+            print('existing ' + str(self.procs[hw_id]))
+            return
+
+        comm = shlex.split('arecord -d plug%s -f S16_LE -d %d -' % (hw_id, duration))
+        rec_proc = Popen(comm, stdout=PIPE)
+        Timer(duration + 1, self.stop, args=(hw_id, rec_proc)).start()
+        self.procs[hw_id] = rec_proc
+
+        while True:
+            proc = self.procs.get(hw_id)
+            if not proc:
+                break
+            if proc.poll() != None:
+                buf = proc.stdout.read()
+                if buf:
+                    yield buf
+                break
+
+            buf += proc.stdout.read(self.buf_size)
+            if len(buf) < self.buf_size:
+                sleep(self.poll_interval)
+                continue
+
+            yield buf
+            buf = b''
+
+    def stop(self, hw_id, rec_proc=None):
+        proc = self.procs.get(hw_id)
+        if proc and proc.poll() == None and (proc == rec_proc or rec_proc == None):
+            proc.kill()
+            print('stopped')
+            del(self.procs[hw_id])

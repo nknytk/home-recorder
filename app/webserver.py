@@ -58,7 +58,10 @@ def routing_app(env, start_response):
     try:
         header, content = func(env)
         start_response('200 OK', header)
-        return [content]
+        if isinstance(content, bytes):
+            return [content]
+        else:
+            return content
     except BadRequest as e:
         print(e)
         print(traceback.format_exc())
@@ -78,6 +81,7 @@ def get_func_from_path(path_info):
         app = __import__('webapp.' + resource, fromlist=[resource])
         func = getattr(app, method)
     except (AttributeError, ImportError):
+        print(traceback.format_exc())
         return None
 
     return func
@@ -92,5 +96,5 @@ def _return_error(start_response, status_code_int):
 
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8701
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8071
     run_server(port=port)
