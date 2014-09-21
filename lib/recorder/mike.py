@@ -17,14 +17,21 @@ class Mike(RecorderThread):
         if os.path.exists(storage):
             shutil.rmtree(storage)
         os.makedirs(storage)
+        self.storage = storage
 
         mike_threads = []
         devices = self.setting['devices'] if self.setting.get('devices') else avail_mikes()
         for dev in devices:
-            soundfile = os.path.join(storage, eventid + '_' + dev + '.mp3')
-            th = Thread(target=record_mp3, args=(dev, duration, soundfile))
+            th = Thread(target=self.rec_sound, args=(duration, dev))
             th.start()
             mike_threads.append(th)
 
         for th in mike_threads:
             th.join()
+
+    def rec_sound(self, duration, devicename):
+        tmpfile = os.path.join(self.storage, '.' + devicename + '.mp3')
+        soundfile = os.path.join(self.storage, devicename + '.mp3')
+        record_mp3(devicename, duration, tmpfile)
+        if os.path.exists(tmpfile):
+            os.rename(tmpfile, soundfile)

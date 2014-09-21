@@ -60,6 +60,8 @@ class Mail(RecorderThread):
 
         current_files = []
         for f in files:
+            if f.startswith('.'):
+                continue
             f = os.path.join(dir_name, f)
             if os.path.isfile(f):
                 current_files.append(f)
