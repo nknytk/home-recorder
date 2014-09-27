@@ -2,13 +2,15 @@
 
 import os
 import sys
+import json
 import traceback
 from urllib.parse import parse_qsl
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
-from lamearecord import avail_mikes, WaveGenerator
+from lamearecord import avail_mikes, WaveGenerator, MP3Generator
 
 wav_generator = WaveGenerator()
+mp3_generator = MP3Generator()
 
 HTML_TEMPLATE="""<html>
 <head><title>listen to mike</title></head>
@@ -25,7 +27,8 @@ Select mike id:&nbsp;<select id="device">%s</select>
 function restart () {
     var device = document.getElementById("device").value;
     var new_audio_elem = document.createElement("audio");
-    new_audio_elem.src = "/mike/sound?device=" + device;
+    new_audio_elem.src = "/mike/mp3?duration=60&device=" + device;
+    new_audio_elem.preload = "metadata";
     new_audio_elem.id = "audio";
     new_audio_elem.play();
     new_audio_elem.controls = true;
@@ -51,24 +54,34 @@ restart();
 
 
 def devicelist(env):
-    devices = '##########'.join(avail_mikes())
+    devices = json.dumps(avail_mikes())
     content = bytes(devices, 'utf-8')
-    header = [('Content-Type', 'text/plain'), ('Content-Lentgh', str(len(content)))]
+    header = [('Content-Type', 'application/json'),
+              ('Content-Lentgh', str(len(content)))]
     return header, content
 
-def sound(env):
+def wav(env):
+    return _sound(env, wav_generator, 'audio/wav')
+
+def mp3(env):
+    return _sound(env, mp3_generator, 'audio/mp3')
+
+def _sound(env, sound_generator, content_type):
     qdic =  dict(parse_qsl(env.get('QUERY_STRING', '')))
     devname = qdic.get('device')
     if not devname:
-        return [('Content-Type', 'audio/wav'), ('Content-Lentgh', '0')], b''
+        return [('Content-Type', content_type), ('Content-Lentgh', '0')], b''
     duration = int(qdic.get('duration', 10))
 
-    data = wav_generator.listen(devname, duration)
-    if data:
-        header = [('Content-Type', 'audio/wav')]
+    datasize = sound_generator.start_proc(devname, duration)
+    data = sound_generator.listen(devname)
+    if datasize:
+        header = [('Content-Type', content_type), ('Content-Length', str(datasize))]
     else:
-        header = [('Content-Type', 'audio/wav'), ('Content-Length', '0')]
+        header = [('Content-Type', content_type), ('Content-Length', '0')]
+
     return header, data
+
 
 def stop(env):
     devname = dict(parse_qsl(env.get('QUERY_STRING', ''))).get('device')
