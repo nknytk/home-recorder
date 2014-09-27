@@ -9,17 +9,17 @@ from webcam import avail_cameras
 from lamearecord import avail_mikes
 
 ALL_FEATURES = {
-    'camera': 'View camera images',
-    'mike': 'Listen to mike sound',
-    'gpio': 'View GPIO pins\' values',
-    'gcm': 'Receive notification with GCM'
+    'camera': 'Camera',
+    'mike': 'Mike',
+    'gpio': 'GPIO Pin Status',
+    'gcm': 'GCM Push Notification'
 }
 
 
 def available(env):
     available_features = []
     if avail_cameras():
-        available_features.append(('camer', ALL_FEATURES['camera']))
+        available_features.append(('camera', ALL_FEATURES['camera']))
     if avail_mikes():
         available_features.append(('mike', ALL_FEATURES['mike']))
     try:

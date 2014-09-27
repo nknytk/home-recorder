@@ -2,6 +2,7 @@
 
 import os
 import sys
+import json
 from urllib.parse import parse_qsl
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../util'))
@@ -15,7 +16,7 @@ HTML_TEMPLATE="""<html>
 <head><title>camera direction</title></head>
 <body>
 
-<form>Select camera id:&nbsp;<select id="device">%s</select></input></form>
+<form>Select camera id:&nbsp;<select id="device">%s</select></form>
 <div id="imgdiv"><span>Now loading..</span></div>
 
 <script>
@@ -43,9 +44,10 @@ keep_updating_img();
 
 
 def devicelist(env):
-    devices = '\n'.join(avail_cameras())
+    devices = json.dumps([cam.split('/')[-1] for cam in avail_cameras()])
     content = bytes(devices, 'utf-8')
-    header = [('Content-Type', 'text/plain'), ('Content-Lentgh', str(len(content)))]
+    header = [('Content-Type', 'application/json'),
+              ('Content-Lentgh', str(len(content)))]
     return header, content
 
 def image(env):
