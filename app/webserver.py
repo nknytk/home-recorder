@@ -18,7 +18,8 @@ STATUS_DICT = {
    400: '400 Bad Request',
    401: '401 Unauthorized',
    404: '404 Not Found',
-   500: '500 Internal Server Error'
+   500: '500 Internal Server Error',
+   503: '503 Service Tmporary Unavailable'
 }
 LOCAL_IPs = []
 try:
@@ -35,20 +36,20 @@ except:
 class ThreadingServer(ThreadingMixIn, WSGIServer):
     pass
 
-def run_server(switch_obj=None, port=8071):
+def get_server(controller_obj=None, port=8071):
     class SwitchHandler(WSGIRequestHandler):
         def get_environ(self):
             env = WSGIRequestHandler.get_environ(self)
-            env['detection_switcher'] = switch_obj
+            env['resource_controller'] = controller_obj
             return env
 
     svr = make_server('', port, routing_app, ThreadingServer, SwitchHandler)
-    svr.serve_forever()
+    return svr
 
 def routing_app(env, start_response):
-    switch = env['detection_switcher']
+    controller = env['resource_controller']
     rmip = env.get('REMOTE_ADDR', '')
-    if switch and not (rmip in switch.responder_ips or rmip in LOCAL_IPs):
+    if controller and not (rmip in controller.responder_ips or rmip in LOCAL_IPs):
         return _return_error(start_response, 401)
 
     func = get_func_from_path(env['PATH_INFO'])
@@ -97,4 +98,5 @@ def _return_error(start_response, status_code_int):
 
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8071
-    run_server(port=port)
+    svr = get_server(port=port)
+    svr.serve_forever()

@@ -41,6 +41,9 @@ def capture(conf_file):
 def write_webcam_config(override_conf, conf_file='/tmp/webcam.conf'):
     conf = deepcopy(DEFAULT_CONF)
     conf.update(override_conf)
+    conf_dir = os.path.dirname(conf_file)
+    if not os.path.isdir(conf_dir):
+        os.makedirs(conf_dir)
     with open(conf_file, mode='w', encoding='utf-8') as f:
         f.write('[grab]\n')
         f.write('\n'.join([p + ' = ' + str(v) for p, v in conf.items()]))

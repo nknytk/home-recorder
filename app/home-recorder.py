@@ -10,8 +10,7 @@ from time import localtime, sleep, strftime, time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 homedir = os.path.join(current_dir, '../')
 sys.path.insert(0, os.path.join(homedir, 'lib'))
-from util import presence
-from webserver import run_server
+from controller import ResourceController
 
 def load_components(setting, component_name):
     components = []
@@ -40,7 +39,9 @@ def testrun(setting):
     print('OK\n')
 
     print('Start checking if owner is at home.')
-    detection_switcher = AutoEventCheckSwitcher(setting)
+    resource_controller = ResourceController(setting)
+    resource_controller.start_auto_switch()
+    resource_controller.start_webserver()
     print('OK\n')
 
     print('Run event checks.')
@@ -64,7 +65,8 @@ def testrun(setting):
     print('OK\n')
 
     print('Stop checking if owner is at home.')
-    detection_switcher.stop()
+    resource_controller.stop_auto_switch()
+    resource_controller.stop_webserver()
     print('OK\n')
 
     print('All components are OK.')
@@ -75,9 +77,9 @@ def recordhome(setting):
     recorders = load_components(setting, 'recorder')
     error_handler = ErrorHandler(setting, notifiers)
 
-    detection_switcher = AutoEventCheckSwitcher(setting)
-    server_thread = Thread(target=run_server, args=(detection_switcher, ))
-    server_thread.start()
+    resource_controller = ResourceController(setting)
+    resource_controller.start_auto_switch()
+    resource_controller.start_webserver()
 
     skipped_last = False
     next_loop = 0
@@ -87,14 +89,14 @@ def recordhome(setting):
             sleep(remaining_wait)
         next_loop = time() + setting.get('check_interval', 1)
 
-        if not detection_switcher.eventcheck_enabled():
+        if not resource_controller.status['enabled']:
             if not skipped_last:
-                print('Paired clients are in LAN. Disable Event check.')
+                print('Paired clients are in LAN. Start webserver and disable Event check.')
             skipped_last = True
             continue
 
         if skipped_last:
-            print('No paired client is in LAN. Enable Event check.')
+            print('No paired client is in LAN. Stop webserver and enable Event check.')
             for checker in eventcheckers:
                 checker.reset()
         skipped_last = False
@@ -169,54 +171,6 @@ class ErrorHandler:
                 notifier.notify('Error in ' + error_point, message)
         except:
             print(traceback.format_exc())
-
-class AutoEventCheckSwitcher:
-    def __init__(self, setting):
-        self.status = {}
-        self.responder_ips = set()
-        self.max_retry = setting.get('presence_check_max_retry', 10)
-        self.timeout = setting.get('presence_check_timeout', 0.5)
-        self.interval = setting.get('presence_check_interval', 10)
-
-        self.s_token = setting.get('server_side_token')
-        self.c_token = setting.get('client_side_token')
-        self.repetition = setting.get('repetition', 300)
-
-        if self.s_token and self.c_token and isinstance(self.repetition, int):
-            self.update_status()
-            self.t = Thread(target=self.auto_switch)
-            self.t.start()
-
-    def auto_switch(self):
-        while True:
-            if self.status.get('stop'):
-                break
-            start_time = time()
-            self.update_status()
-            intvl = 1 if self.status['enabled'] else self.interval
-            remainig_interval = start_time + intvl - time()
-            if remainig_interval > 0:
-                sleep(remainig_interval)
-
-    def update_status(self):
-        current_responders = set()
-        for i in range(self.max_retry):
-            server_token, client_digest = presence.token_pair(self.s_token, self.c_token, self.repetition)
-            presence.send(byte_msg=server_token)
-            current_responders.update(presence.receive(expected_data=client_digest, timeout=self.timeout))
-            if not self.responder_ips - current_responders:
-                break
-        self.responder_ips = current_responders
-
-        # if registered clients are in LAN, disable event check
-        self.status['enabled'] = False if self.responder_ips else True
-
-    def eventcheck_enabled(self):
-        return self.status['enabled']
-
-    def stop(self):
-        self.status['stop'] = True
-        self.t.join()
 
 
 if __name__ == '__main__':
