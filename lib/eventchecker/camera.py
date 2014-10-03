@@ -11,7 +11,7 @@ from webcam import avail_cameras, capture, write_webcam_config
 
 class Camera(EventCheckerBase):
     def __init__(self):
-        EventCheckerBase.__init__(self)
+        super().__init__()
 
         self.devices = self.setting['devices'] if self.setting.get('devices') else avail_cameras()
         self.width = int(self.setting.get('width', 320))

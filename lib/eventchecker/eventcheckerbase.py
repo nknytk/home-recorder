@@ -9,7 +9,7 @@ from pluginbase import PluginBase
 class EventCheckerBase(PluginBase):
     def __init__(self):
         self.modtype = 'eventchecker'
-        PluginBase.__init__(self)
+        super().__init__()
         
     def check(self):
         return (False, 'Nothing happened', [])

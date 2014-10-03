@@ -9,7 +9,7 @@ from pluginbase import PluginBase
 class NotifierBase(PluginBase):
     def __init__(self):
         self.modtype = 'notifier'
-        PluginBase.__init__(self)
+        super().__init__()
 
     def notify(self, eventid, duration):
         pass

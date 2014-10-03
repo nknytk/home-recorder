@@ -6,7 +6,7 @@ from .pichecker import EventCheckerBase
 
 class GPIOSwitch(EventCheckerBase):
     def __init__(self):
-        EventCheckerBase.__init__(self)
+        super().__init__()
 
         self.OPEN = GPIO.HIGH
         self.CLOSED = GPIO.LOW
