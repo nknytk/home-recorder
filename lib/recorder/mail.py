@@ -14,7 +14,11 @@ class Mail(RecorderThread):
     def record(self, eventid, duration):
         eventdirs = []
         processed_files = {}
-        for ds in self.setting.get('datasource', []):
+        datasource = self.setting.get('datasource', [])
+        if isinstance(datasource, str):
+            datasource = [datasource]
+
+        for ds in datasource:
             eventdir = os.path.join(self.homedir, 'data', 'recorder', ds, eventid)
             eventdirs.append(eventdir)
             processed_files[eventdir] = set()

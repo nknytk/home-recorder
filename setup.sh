@@ -12,7 +12,7 @@ for pkg in ${DEPENDANCIES}; do
 done
 
 # for arm linux
-if [ ! -f /usr/lib/libjpeg.so ]; then
+if [ ! -f /usr/lib/libjpeg.so ] && [ -f /usr/lib/arm-linux-gnueabihf/libjpeg.so ]; then
   sudo ln -s /usr/lib/arm-linux-gnueabihf/libjpeg.so /usr/lib/
 fi
 
