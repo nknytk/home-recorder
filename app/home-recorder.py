@@ -72,6 +72,8 @@ def testrun(setting):
     print('All components are OK.')
 
 def recordhome(setting):
+    print('Start application')
+
     eventcheckers = load_components(setting, 'eventchecker')
     notifiers = load_components(setting, 'notifier')
     recorders = load_components(setting, 'recorder')
