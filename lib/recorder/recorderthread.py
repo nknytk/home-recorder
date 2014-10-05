@@ -15,6 +15,7 @@ class RecorderThread(PluginBase):
         super().__init__()
 
     def start_recording(self, eventid, duration):
+        """this method is diretry called by home-recorder"""
         self.recorder_thread = Thread(target=self.record, args=(eventid, duration))
         self.recorder_thread.start()
 
@@ -22,6 +23,11 @@ class RecorderThread(PluginBase):
         self.recorder_thread.join()
 
     def record(self, eventid, duration):
+        """
+        Call snapshot() for duration in every interval sec.
+        This method runs in another thread to enable prallel recording.
+        Entirely override record() if you want non-snapshot type recording.
+        """
         finishtime = time() + duration
 
         while time() < finishtime:
@@ -37,4 +43,8 @@ class RecorderThread(PluginBase):
                 break
 
     def snapshot(self, eventid):
+        """
+        Override this to record to take a snapshot
+        e.g. read thermometer for every 1 second.
+        """
         pass

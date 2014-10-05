@@ -12,6 +12,15 @@ class EventCheckerBase(PluginBase):
         super().__init__()
         
     def check(self):
+        """
+        check() is called to check events by home-recoreder without arguments.
+        Override this method in your event checker.
+        check() should return a tuple with following three values:
+          - Whether event occured in booean. If True, home-recorder goes to notification.
+          - Message in unicode string. This string will be passed to the notifiers.
+          - Data paths in a list. This list will be passed to the notifiers.
+        """
+
         return (False, 'Nothing happened', [])
 
     def reset(self):
