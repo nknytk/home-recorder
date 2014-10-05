@@ -2,7 +2,7 @@
 
 HRHOME=`dirname $0`
 PYTHON="/usr/bin/python3"
-DEPENDANCIES="webcam python3-pip libjpeg8-dev"
+DEPENDANCIES="webcam lame python3-pip libjpeg8-dev"
 
 for pkg in ${DEPENDANCIES}; do
   dpkg -l ${pkg} > /dev/null 2>&1
