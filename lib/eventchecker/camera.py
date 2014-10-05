@@ -13,11 +13,16 @@ class Camera(EventCheckerBase):
     def __init__(self):
         super().__init__()
 
+        self.diff_thresh =  self.setting.get('diff_threshold', 0.2)
+        if not 0 < self.diff_thresh < 1:
+            raise ValueError('diff_threshold must be between 0 and 1')
+
         self.devices = self.setting['devices'] if self.setting.get('devices') else avail_cameras()
         self.width = int(self.setting.get('width', 320))
         self.height = int(self.setting.get('height', 240))
+        self.max_vector_len = (255**2 * 3)**(1/2)
         self.target_pixels = []
-        divnum = self.setting['num_of_points'] + 1
+        divnum = self.setting.get('num_of_points', 10) + 1
         for i in range(1, divnum):
             for j in range(1, divnum):
                 self.target_pixels.append((int(i * self.width/divnum), int(j * self.height/divnum)))
@@ -53,12 +58,17 @@ class Camera(EventCheckerBase):
 
         for devname in devnames:
             camera_threads[devname].join()
-            if self.diffsize(self.pxls[devname][0], self.pxls[devname][1]) > self.setting['diff_threshold'] \
-               and self.diffsize(self.pxls[devname][0], self.pxls[devname][2]) > self.setting['diff_threshold']:
-               event_occurred = True
-               event_devices.append(devname)
-               files.append(self.filenames[devname]['previous'])
-               files.append(self.filenames[devname]['newest'])
+            diffs = sorted(self.diffsizes(devname), reverse=True)
+            if diffs[int(len(diffs)*0.1)] < self.diff_thresh:
+                continue
+            diffs = sorted(self.diffsizes(devname, 1), reverse=True)
+            if diffs[int(len(diffs)*0.1)] < self.diff_thresh:
+                continue
+
+            event_occurred = True
+            event_devices.append(devname)
+            files.append(self.filenames[devname]['previous'])
+            files.append(self.filenames[devname]['newest'])
 
         if event_devices:
             msg = '%s detected motion event. See attached images.' % ','.join(event_devices)
@@ -86,11 +96,13 @@ class Camera(EventCheckerBase):
         img.close()
         self.pxls[devname].insert(0, pxs)
 
-    def diffsize(self, pxs1, pxs2):
-        ds = 0
-        for v1, v2 in zip(pxs1, pxs2):
-            ds += abs(v1[0] - v2[0]) + abs(v1[1] - v2[1]) + abs(v1[2] - v2[2])
-        return ds * 100 / (255 * 3 * len(pxs1))
+    def diffsizes(self, devname, offset=0):
+        diff_sizes = []
+        for v1, v2 in zip(self.pxls[devname][offset], self.pxls[devname][offset+1]):
+            vector_size = ((v1[0]-v2[0])**2 + (v1[1]-v2[1])**2 + (v1[2]-v2[2])**2)**(1/2)
+            relative_size = vector_size / self.max_vector_len
+            diff_sizes.append(relative_size)
+        return diff_sizes
 
 
 if __name__ == '__main__':
