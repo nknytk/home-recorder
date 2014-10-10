@@ -12,7 +12,8 @@ Detect, record and notifiy events in your home for your security.
   * with email  
 * record the event  
   * with cameras  
-  * send images from the cameras with email  
+  * with mikes
+  * send images and sound files via email  
 
 ## Requirements
 
@@ -28,14 +29,14 @@ typical usage
 1. Setup Raspbian on a raspberry pi or Ubuntu on a PC.  
 2. Connect web cameras with the device.  
 3. Download home-recorder.
-  * Click Download ZIP button on the github page, and unzip the donloaded file.  
+  * Click "Download ZIP" button on the github page, and unzip the donloaded file.  
   * `git clone https://github.com/nknytk/home-recorder.git`  
 4. Run `./setup.sh` to install dependencies.  
-5. Adjust direction of the cameras. Run `./camera_direction_config.sh`, and you will see a URL to view images from the cameras with your browser.  
+5. Adjust direction of the cameras. Run `./camera_direction_config.sh`, and you will see a URL to view images from the cameras with your browser. This process is unneccesary if you have the Android client. 
 6. Install the [client](https://github.com/nknytk/home-recorder-client) into your Android device.  
 7. Write config files.
   * Set eventcheck interval, pairing information with the client to "conf/common/home-recorder.json."  
-  * Set your mail settings to "conf/common/mail.json."  Web mails (i.e. gmail) are deprecated because they often block mail from unofficial clients. Use the account provided by internet service porviders.
+  * Set your mail settings to "conf/common/mail.json."  Web mails (i.e. gmail) are deprecated because they often block mails from unofficial clients. Use the account provided by your internet service porvider.
 8. Run test with `./start.sh test`. Fix configs until you see "All components are OK." at last.
 9. Start home-recorder with `./start.sh`.
 
@@ -65,6 +66,6 @@ Check out [Android client application](https://github.com/nknytk/home-recorder-c
 
 ## License
 
-Copyright (c) [2014] [Yutaka Nakano]
+Copyright 2014 Yutaka Nakano
 
 This software is released under the Apache License v2.
