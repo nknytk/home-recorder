@@ -1,0 +1,7 @@
+{
+    "account_sid": "<your twillio accound SID>",
+    "auth_token": "<your twillio auth token>",
+    "caller": "<caller phone number starting with +region code>",
+    "callee": "<callee phone number. If you're in Japan and phone 090-XXXX-YYYY +8190XXXXYYYY shoud be here>",
+    "twimlbin_url": "URL of twimlbin. ex: http://twimlbin.com/external/XYZ"
+}
