@@ -1,0 +1,22 @@
+{
+    "check_interval": 1,
+    "recording_duration": 60,
+    "eventchecker": ["camera"],
+    "notifier": ["mail"],
+    "recorder": ["camera", "mike", "mail"],
+    "error_suppression_interval": 600,
+    "server_side_token": "<Input server side token to use Android client application, otherwise blank.>",
+    "client_side_token": "<Input server side token to use Android client application, otherwise blank. long and random string is desirable.>",
+    "token_digest_repetition": 300,
+    "plugin-common": {
+        "mail": {
+            "mail_from": "<Your e-mail address>",
+            "password": "<Your e-mail password>",
+            "mail_to": "<E-mail addresses to notify events. For multiple addresses, split then by comma.",
+            "server": "E-mail server hostname or IP address",
+            "port": 587,
+            "datasource": ["camera", "mike", "movie"],
+            "subject": "HomeRecorder detected event.",
+            "interval": 10
+    }
+}

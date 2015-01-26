@@ -2,7 +2,7 @@
 
 from time import time
 from RPi import GPIO
-from .pichecker import EventCheckerBase
+from .eventcheckerbase import EventCheckerBase
 
 class GPIOSwitch(EventCheckerBase):
     def __init__(self):

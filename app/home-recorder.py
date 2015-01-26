@@ -176,7 +176,7 @@ class ErrorHandler:
 
 
 if __name__ == '__main__':
-    conffile = os.path.join(homedir, 'conf/common/home-recorder.json')
+    conffile = os.path.join(homedir, 'conf/home-recorder.json')
     with open(conffile, encoding='utf-8') as f:
         SETTING = loads(f.read())
 

@@ -32,11 +32,12 @@ typical usage
   * Click "Download ZIP" button on the github page, and unzip the donloaded file.  
   * `git clone https://github.com/nknytk/home-recorder.git`  
 4. Run `./setup.sh` to install dependencies.  
-5. Adjust direction of the cameras. Run `./camera_direction_config.sh`, and you will see a URL to view images from the cameras with your browser. This process is unneccesary if you have the Android client. 
+5. Adjust direction of the cameras. Run `./camera_direction_config.sh`, and you will see a URL to view images from the cameras with your browser. This process is unneccesary if you have the Android client because you can watch camera with the client. 
 6. Install the [client](https://github.com/nknytk/home-recorder-client) into your Android device.  
 7. Write config files.
-  * Set eventcheck interval, pairing information with the client to "conf/common/home-recorder.json."  
-  * Set your mail settings to "conf/common/mail.json."  Web mails (i.e. gmail) are deprecated because they often block mails from unofficial clients. Use the account provided by your internet service porvider.
+  * Set eventcheck interval, pairing information with the client to "conf/home-recorder.json."  
+  * Set your mail settings to "conf/home-recorder.json." Web mails (i.e. gmail) are deprecated because they often block mails from unofficial clients. Use the account provided by your internet service porvider.
+  * Set plugin-specific config to "conf/eventchecker.json", "conf/notifier.json" or "conf/recorder.json." If you want to config camera eventchecker, edit "conf/eventchecker.json." 
 8. Run test with `./start.sh test`. Fix configs until you see "All components are OK." at last.
 9. Start home-recorder with `./start.sh`.
 

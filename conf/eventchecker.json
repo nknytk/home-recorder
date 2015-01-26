@@ -1,0 +1,7 @@
+{
+    "gpioswitch": {},
+    "camera": {
+        "num_of_points": 10,
+        "diff_threshold": 0.2
+    }
+}
