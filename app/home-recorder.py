@@ -50,7 +50,9 @@ def testrun(setting):
     print('OK\n')
     print('Run notifications.')
     for notifier in notifiers:
-        notifier.notify('test', 'Test notification from home-recorder')
+        notifier.start_notification('test', 'Test notification from home-recorder')
+    for notifier in notifiers:
+        notifier.join()
     print('OK\n')
     print('Run recorders.')
     for recorder in recorders:
@@ -121,18 +123,17 @@ def recordhome(setting):
             continue
         print('Event detected: ' + ' '.join(event_msgs))
 
-        # If event is detected, notify
+        # If event is detected, notify and record
         evid = strftime('%Y-%m-%d_%H:%M:%S', localtime())
-        print('Start notification and recording. Event iD: ' + evid)
-        for notifier in notifiers:
-            try:
-                notifier.load_conf()
-                notifier.notify(evid, '\n'.join(event_msgs), event_files)
-            except:
-                print(traceback.format_exc())
-
-        # Record after notification
         try:
+            print('Start notification and recording. Event iD: ' + evid)
+            # Start notification threads
+            for notifier in notifiers:
+                notifier.load_conf()
+                notifier.start_notification(evid, '\n'.join(event_msgs), event_files)
+            sleep(0.3)
+
+            # Start recording after starting notification
             for recorder in recorders:
                 recorder.load_conf()
                 recorder.start_recording(evid, setting['recording_duration'])
@@ -141,6 +142,8 @@ def recordhome(setting):
             error_handler.handle('recorder', traceback.format_exc())
 
         finally:
+            for notifier in notifiers:
+                notifier.join()
             for recorder in recorders:
                 recorder.join()
 

@@ -19,8 +19,8 @@ class RecorderThread(PluginBase):
         self.recorder_thread = Thread(target=self.record, args=(eventid, duration))
         self.recorder_thread.start()
 
-    def join(self):
-        self.recorder_thread.join()
+    def join(self, timeout=None):
+        self.recorder_thread.join(timeout)
 
     def record(self, eventid, duration):
         """
